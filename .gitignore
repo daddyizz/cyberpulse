@@ -1,0 +1,37 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Gradle and Android build outputs
+.gradle/
+app/build/
+**/build/
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+
+# Android Studio & IntelliJ
+.idea/
+*.iml
+.navigation/
+captures/
+output.json
+
+# Keystore & Signing secrets
+*.jks
+*.keystore
+debug.keystore
+release.keystore
+signing.properties
+
+# Local configuration
+local.properties
+google-services.json
+

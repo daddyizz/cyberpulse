@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">CyberPulse Music</string>
+    <string name="app_short_name">CyberPulse</string>
+    <string name="package_name">com.daddyizz.cyberpulse</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_explore">Explore</string>
+    <string name="nav_library">Library</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Your Music. Your Universe.</string>
+    <string name="onboarding_desc_1">Discover, organize and experience music in a whole new way.</string>
+    <string name="onboarding_cta_get_started">Get Started</string>
+
+    <string name="onboarding_title_2">What moves you?</string>
+    <string name="onboarding_desc_2">Select genres you love to tune your algorithmic pulse.</string>
+
+    <string name="onboarding_title_3">Favorite Artists</string>
+    <string name="onboarding_desc_3">Pick your top sonic architects to build your seed network.</string>
+
+    <string name="onboarding_title_4">Personalization</string>
+    <string name="onboarding_desc_4">CyberPulse will use your listening activity to improve recommendations.</string>
+    <string name="onboarding_pref_toggle">Personalized Recommendations</string>
+
+    <string name="onboarding_title_5">Stay in the Loop</string>
+    <string name="onboarding_desc_5">Get updates about new music and playlists.</string>
+    <string name="onboarding_cta_enable_notifications">Enable Notifications</string>
+    <string name="onboarding_cta_not_now">Not Now</string>
+
+    <string name="onboarding_title_6">You\'re ready.</string>
+    <string name="onboarding_desc_6">Your personal cyber sonic soundscape has been calibrated.</string>
+    <string name="onboarding_cta_enter">Enter CyberPulse</string>
+
+    <string name="action_continue">Continue</string>
+    <string name="action_skip">Skip</string>
+
+    <!-- Home -->
+    <string name="greeting_morning">Good Morning</string>
+    <string name="greeting_afternoon">Good Afternoon</string>
+    <string name="greeting_evening">Good Evening</string>
+
+    <!-- Placeholders -->
+    <string name="feature_coming_soon">Coming in a future build</string>
+    <string name="downloads_coming_soon">Coming in a future update</string>
+</resources>

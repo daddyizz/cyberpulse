@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- CyberPulse Core Palette -->
+    <color name="cyber_bg_primary">#07090F</color>
+    <color name="cyber_surface_secondary">#10131C</color>
+    <color name="cyber_surface_elevated">#171B28</color>
+    <color name="cyber_surface_card">#131724</color>
+    <color name="cyber_border_subtle">#1F2436</color>
+    <color name="cyber_oled_black">#000000</color>
+
+    <!-- Neon Accents -->
+    <color name="cyber_neon_cyan">#00F5FF</color>
+    <color name="cyber_electric_purple">#8B5CFF</color>
+    <color name="cyber_pink">#FF2ED1</color>
+    <color name="cyber_acid_green">#B8FF2C</color>
+
+    <!-- Typography -->
+    <color name="cyber_text_primary">#F7F8FC</color>
+    <color name="cyber_text_secondary">#9CA3B7</color>
+    <color name="cyber_text_muted">#61697C</color>
+
+    <!-- Overlay & Glass -->
+    <color name="cyber_scrim">#CC07090F</color>
+    <color name="cyber_cyan_alpha15">#2600F5FF</color>
+    <color name="cyber_purple_alpha20">#338B5CFF</color>
+</resources>

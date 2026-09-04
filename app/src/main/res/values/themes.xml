@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme -->
+    <style name="Theme.CyberPulse" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/cyber_bg_primary</item>
+        <item name="android:navigationBarColor">@color/cyber_bg_primary</item>
+        <item name="android:windowBackground">@color/cyber_bg_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Splash Screen theme -->
+    <style name="Theme.CyberPulse.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/cyber_bg_primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.CyberPulse</item>
+    </style>
+</resources>
