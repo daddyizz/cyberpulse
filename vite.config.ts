@@ -2,11 +2,10 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
-import { cyberPlayerReliabilityPatch } from './build/cyberPlayerReliabilityPatch';
 import { spotifyApiMiddleware } from './build/spotifyApiMiddleware';
 
 export default defineConfig(() => ({
-  plugins: [cyberPlayerReliabilityPatch(), react(), tailwindcss(), spotifyApiMiddleware()],
+  plugins: [react(), tailwindcss(), spotifyApiMiddleware()],
   envPrefix: ['VITE_'],
   resolve: {
     alias: {
