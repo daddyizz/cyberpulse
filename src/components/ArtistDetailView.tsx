@@ -5,8 +5,8 @@ import { CyberArtwork } from './CyberArtwork';
 
 interface ArtistDetailViewProps {
   artist: Artist;
-  tracks: Track[];
-  albums: Album[];
+  tracks?: Track[];
+  albums?: Album[];
   onBack: () => void;
   onSelectTrack: (track: Track) => void;
   onSelectAlbum: (albumId: string) => void;
@@ -14,17 +14,24 @@ interface ArtistDetailViewProps {
 
 export const ArtistDetailView: React.FC<ArtistDetailViewProps> = ({
   artist,
-  tracks,
-  albums,
+  tracks = [],
+  albums = [],
   onBack,
   onSelectTrack,
   onSelectAlbum,
 }) => {
-  const [isFollowing, setIsFollowing] = useState(artist.isFollowed || false);
+  const [isFollowing, setIsFollowing] = useState(artist?.isFollowed || false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const topTracks = tracks.filter((t) => t.artistId === artist.id || t.artist === artist.name);
-  const artistAlbums = albums.filter((a) => a.artistId === artist.id || a.artist === artist.name);
+  const safeTracks = Array.isArray(tracks) ? tracks : [];
+  const safeAlbums = Array.isArray(albums) ? albums : [];
+
+  const topTracks = safeTracks.filter(
+    (t) => t && (t.artistId === artist?.id || t.artist?.toLowerCase() === artist?.name?.toLowerCase())
+  );
+  const artistAlbums = safeAlbums.filter(
+    (a) => a && (a.artistId === artist?.id || a.artist?.toLowerCase() === artist?.name?.toLowerCase())
+  );
 
   return (
     <div className="p-4 space-y-5 pb-28 animate-in fade-in duration-200">
@@ -37,7 +44,7 @@ export const ArtistDetailView: React.FC<ArtistDetailViewProps> = ({
           <ArrowLeft className="w-5 h-5" />
         </button>
         <span className="text-xs font-mono tracking-widest text-[#00F5FF] uppercase font-bold">
-          {artist.source === 'YOUTUBE' ? 'YouTube Channel (Discovery Abstraction)' : 'Artist Profile (Demo Catalog)'}
+          {artist.source === 'YOUTUBE' ? 'YouTube Channel' : 'Artist Profile'}
         </span>
         <button
           onClick={() => {
@@ -53,11 +60,11 @@ export const ArtistDetailView: React.FC<ArtistDetailViewProps> = ({
       {/* Hero Header */}
       <div className="relative rounded-3xl overflow-hidden p-6 border border-[#171B28] bg-gradient-to-b from-[#171B28]/80 to-[#10131C]/90 backdrop-blur-xl flex flex-col items-center text-center">
         <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-[#00F5FF] shadow-[0_0_30px_rgba(0,245,255,0.3)] mb-4">
-          <CyberArtwork keyName={artist.artworkKey} />
+          <CyberArtwork keyName={artist.artworkKey} artworkUrl={artist.artworkUrl} />
         </div>
 
         <span className="px-2.5 py-0.5 mb-2 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#00F5FF]/10 border border-[#00F5FF]/30 text-[#00F5FF]">
-          {artist.source === 'YOUTUBE' ? 'YouTube Channel • Discovery Abstraction' : 'Local Demo Catalog'}
+          {artist.source === 'YOUTUBE' ? 'YouTube Channel' : 'Official Artist'}
         </span>
 
         <h1 className="text-2xl font-black uppercase tracking-tight text-[#F7F8FC] mb-1">
@@ -71,11 +78,11 @@ export const ArtistDetailView: React.FC<ArtistDetailViewProps> = ({
               : artist.subscriberCount
               ? `${artist.subscriberCount.toLocaleString()} YouTube Channel Subscribers`
               : 'Subscribers: Statistics Unavailable'
-            : `${(artist.followersCount / 1000).toLocaleString()}k Listeners (Simulated Local Demo Data)`}
+            : `${((artist.followersCount || 0) / 1000).toLocaleString()}k Monthly Listeners`}
         </div>
 
         <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-          {artist.genres.map((g) => (
+          {(artist.genres || []).map((g) => (
             <span
               key={g}
               className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#10131C] border border-[#171B28] text-[#9CA3B7]"
@@ -141,18 +148,6 @@ export const ArtistDetailView: React.FC<ArtistDetailViewProps> = ({
         </div>
       )}
 
-      {/* Discovery Abstraction / Demo Catalog Disclaimer */}
-      <div className="p-3.5 rounded-2xl bg-[#10131C] border border-[#171B28]">
-        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#00F5FF] mb-1">
-          {artist.source === 'YOUTUBE' ? 'CyberPulse Discovery Abstraction' : 'Local Demo Catalog'}
-        </div>
-        <p className="text-xs text-[#9CA3B7] leading-relaxed">
-          {artist.source === 'YOUTUBE'
-            ? 'This artist profile is mapped from public YouTube Channel metadata. Popular tracks reflect creator video uploads, not an official studio discography.'
-            : 'Pre-bundled local demo fixture for offline navigation, preview testing, and architectural validation.'}
-        </p>
-      </div>
-
       {/* Bio */}
       {artist.bio && (
         <div className="p-4 rounded-2xl bg-[#10131C]/80 border border-[#171B28]">
@@ -175,7 +170,7 @@ export const ArtistDetailView: React.FC<ArtistDetailViewProps> = ({
             >
               <span className="w-5 text-center text-xs font-mono text-[#61697C]">{idx + 1}</span>
               <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-white/5">
-                <CyberArtwork keyName={trk.placeholderArtworkKey} />
+                <CyberArtwork keyName={trk.placeholderArtworkKey} artworkUrl={trk.artworkUrl} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-bold text-[#F7F8FC] truncate">{trk.title}</div>
@@ -206,7 +201,7 @@ export const ArtistDetailView: React.FC<ArtistDetailViewProps> = ({
                 className="p-3 rounded-2xl bg-[#10131C]/90 border border-[#171B28] hover:border-[#00F5FF]/50 cursor-pointer transition-all hover:scale-[1.02] flex flex-col gap-2"
               >
                 <div className="aspect-square rounded-xl overflow-hidden border border-white/5">
-                  <CyberArtwork keyName={alb.artworkKey} />
+                  <CyberArtwork keyName={alb.artworkKey} artworkUrl={alb.artworkUrl} />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-[#F7F8FC] truncate">{alb.title}</div>

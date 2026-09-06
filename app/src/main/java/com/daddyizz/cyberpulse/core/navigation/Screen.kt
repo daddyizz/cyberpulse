@@ -13,6 +13,13 @@ sealed class Screen(val route: String) {
     data object NowPlaying : Screen("now_playing")
     data object OnThisDevice : Screen("on_this_device")
     data object CyberRadio : Screen("cyber_radio")
+    data object CyberDj : Screen("cyber_dj")
+    data object AiPlaylist : Screen("ai_playlist")
+    data object Pro : Screen("pro")
+    data object Lyrics : Screen("lyrics")
+    data object Visualizer : Screen("visualizer")
+    data object ListeningStats : Screen("listening_stats")
+    data object CyberPulseReplay : Screen("cyberpulse_replay")
     data object ComingSoon : Screen("coming_soon/{featureName}") {
         fun createRoute(featureName: String) = "coming_soon/$featureName"
     }

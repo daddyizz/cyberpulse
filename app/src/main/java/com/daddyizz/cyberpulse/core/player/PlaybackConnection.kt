@@ -43,6 +43,12 @@ class PlaybackConnection private constructor(private val appContext: Context) {
     )
     val playbackState: StateFlow<PlaybackState> = _playbackState.asStateFlow()
 
+    var eventRecorder: com.daddyizz.cyberpulse.core.analytics.PlaybackEventRecorder? = null
+
+    fun setPlaybackContext(context: com.daddyizz.cyberpulse.core.analytics.PlaybackContext, extraMetadata: String? = null) {
+        eventRecorder?.setPlaybackContext(context, extraMetadata)
+    }
+
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             updateFullState()
@@ -54,6 +60,7 @@ class PlaybackConnection private constructor(private val appContext: Context) {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             updateFullState()
             manageProgressTicker(isPlaying)
+            eventRecorder?.onIsPlayingChanged(isPlaying)
             if (!isPlaying) {
                 persistActiveState(force = true)
             }
@@ -62,6 +69,8 @@ class PlaybackConnection private constructor(private val appContext: Context) {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             updateFullState()
             recoveryPolicy.reset()
+            val track = mediaItem?.let { MediaItemMapper.toTrack(it) }
+            eventRecorder?.onTrackChanged(track)
             persistActiveState(force = true)
         }
 
@@ -253,7 +262,8 @@ class PlaybackConnection private constructor(private val appContext: Context) {
                 queue = queue,
                 currentQueueIndex = controller.currentMediaItemIndex,
                 error = null,
-                isServiceConnected = true
+                isServiceConnected = true,
+                audioSessionId = CyberPulsePlaybackService.activeAudioSessionId
             )
         }
     }
@@ -319,6 +329,7 @@ class PlaybackConnection private constructor(private val appContext: Context) {
     }
 
     fun skipNext() {
+        eventRecorder?.onManualSkip()
         val controller = mediaController ?: return
         if (controller.hasNextMediaItem()) {
             controller.seekToNextMediaItem()
@@ -326,6 +337,7 @@ class PlaybackConnection private constructor(private val appContext: Context) {
     }
 
     fun skipPrevious() {
+        eventRecorder?.onManualSkip()
         val controller = mediaController ?: return
         if (controller.hasPreviousMediaItem()) {
             controller.seekToPreviousMediaItem()
@@ -354,6 +366,7 @@ class PlaybackConnection private constructor(private val appContext: Context) {
     }
 
     fun stop() {
+        eventRecorder?.onPlaybackStopped()
         mediaController?.stop()
     }
 
@@ -389,6 +402,20 @@ class PlaybackConnection private constructor(private val appContext: Context) {
         val source = PlaybackSourceResolver.resolveSource(track)
         val item = MediaItemMapper.toMediaItem(track, source)
         controller.addMediaItem(item)
+    }
+
+    fun addTracksToQueue(tracks: List<Track>) {
+        val controller = mediaController ?: return
+        val mediaItems = tracks.map { track ->
+            val source = PlaybackSourceResolver.resolveSource(track)
+            MediaItemMapper.toMediaItem(track, source)
+        }
+        controller.addMediaItems(mediaItems)
+    }
+
+    fun clearQueue() {
+        val controller = mediaController ?: return
+        controller.clearMediaItems()
     }
 
     fun playNext(track: Track) {

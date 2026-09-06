@@ -1,6 +1,6 @@
-export type MusicSource = 'LOCAL' | 'DEMO' | 'YOUTUBE' | 'RADIO' | 'OTHER';
+export type MusicSource = 'LOCAL' | 'DEMO' | 'YOUTUBE' | 'SPOTIFY' | 'RADIO' | 'OTHER';
 
-export type SearchFilter = 'ALL' | 'SONGS' | 'ARTISTS' | 'ALBUMS' | 'PLAYLISTS';
+export type SearchFilter = 'ALL' | 'SONGS' | 'ARTISTS' | 'ALBUMS' | 'PLAYLISTS' | 'YOUTUBE' | 'SPOTIFY';
 
 export interface PlaybackCapability {
   mode: 'SUPPORTED_OFFICIAL' | 'EXTERNAL_PLAYER' | 'UNAVAILABLE' | 'UNKNOWN';
@@ -18,6 +18,11 @@ export interface Track {
   placeholderArtworkKey: string;
   artworkUrl?: string;
   durationSeconds: number;
+  audioUrl?: string;
+  youtubeVideoId?: string;
+  spotifyTrackId?: string;
+  spotifyUri?: string;
+  externalUrl?: string;
   source: MusicSource;
   isLiked?: boolean;
   playsCount?: number;
@@ -82,13 +87,17 @@ export type ScreenType =
   | 'search'
   | 'explore'
   | 'library'
+  | 'liked_songs'
   | 'profile'
   | 'settings'
   | 'artist_detail'
   | 'album_detail'
-  | 'playlist_detail';
+  | 'playlist_detail'
+  | 'cyber_dj'
+  | 'ai_playlist'
+  | 'section_detail';
 
-export type CyberTheme = 'frosted' | 'cyberpunk' | 'oled';
+export type CyberTheme = 'frosted' | 'sporty' | 'oled' | 'cyberpunk';
 
 export interface AppPreferences {
   theme: CyberTheme;
@@ -96,8 +105,18 @@ export interface AppPreferences {
   dynamicBackgrounds: boolean;
   dataSaver: boolean;
   recommendationsEnabled: boolean;
+  personalizedAiEnabled?: boolean;
+  keepListeningHistory?: boolean;
+  allowExplicitContent?: boolean;
   notificationsEnabled: boolean;
   isOnboardingCompleted: boolean;
   selectedGenres: string[];
   selectedArtists: string[];
+}
+
+export type VisualizerMode = 'NEON_WAVE' | 'SPECTRUM_PULSE' | 'CYBER_GRID' | 'ORBITAL_PULSE' | 'PARTICLE_FLOW';
+
+export interface LyricLine {
+  timeMs: number;
+  text: string;
 }

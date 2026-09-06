@@ -34,7 +34,8 @@ data class PlaybackState(
     val isServiceConnected: Boolean = false,
     val connectionState: ConnectionState = ConnectionState.DISCONNECTED,
     val isDucked: Boolean = false,
-    val isInterrupted: Boolean = false
+    val isInterrupted: Boolean = false,
+    val audioSessionId: Int = 0
 ) {
     val progressFraction: Float
         get() = if (durationMs > 0) (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f

@@ -21,7 +21,10 @@ class SearchRepository(
     private val primaryProvider: MusicSourceProvider,
     private val fallbackProvider: MusicSourceProvider = DemoMusicSourceProvider(),
     private val cache: MetadataCache = MetadataCache(),
-    private val dataStore: DataStore<Preferences>? = null
+    private val dataStore: DataStore<Preferences>? = null,
+    val spotifyProvider: MusicSourceProvider = com.daddyizz.cyberpulse.core.provider.SpotifyMetadataProvider(
+        com.daddyizz.cyberpulse.core.network.CyberPulseNetworkClient.spotifyService
+    )
 ) {
     companion object {
         val KEY_RECENT_SEARCHES = stringPreferencesKey("cyberpulse_recent_searches_v2")
@@ -33,7 +36,7 @@ class SearchRepository(
 
     // Local in-memory fallback for recent searches if DataStore is uninitialized in tests
     private val _inMemoryRecent = MutableStateFlow(
-        listOf("NeuroDancer", "Night Drive", "Cyber Mix", "Synthwave", "Vector 7")
+        listOf("The Weeknd", "Blinding Lights", "Kavinsky", "Nightcall", "Daft Punk")
     )
 
     fun toggleOfflineMode(enabled: Boolean) {
@@ -67,6 +70,16 @@ class SearchRepository(
             return AppResult.Success(SearchResultPage(items = items, totalEstimatedResults = items.size))
         }
 
+        // Specialized Spotify Filter
+        if (filter == SearchFilter.SPOTIFY) {
+            val spotifyResult = spotifyProvider.search(trimmed, filter, pageToken)
+            if (spotifyResult is AppResult.Success) {
+                val items = spotifyResult.data.tracks.map { SearchResultItem.TrackResult(it) }
+                return AppResult.Success(SearchResultPage(items = items, totalEstimatedResults = items.size))
+            }
+            return spotifyResult
+        }
+
         val cacheKey = "${filter.name}_${trimmed}_${pageToken ?: "p0"}"
 
         // 1. Check cache first if not forcing refresh
@@ -94,7 +107,8 @@ class SearchRepository(
                 val combinedItems = if (filter == SearchFilter.ALL && pageToken == null) {
                     val localMatches = app?.localMusicProvider?.searchLocal(trimmed)?.take(3)?.map { SearchResultItem.TrackResult(it) } ?: emptyList()
                     val radioMatches = app?.radioRepository?.searchStations(trimmed)?.take(2)?.map { SearchResultItem.RadioResult(it) } ?: emptyList()
-                    localMatches + radioMatches + primaryResult.data.items
+                    val spotifyMatches = (spotifyProvider.search(trimmed, SearchFilter.SONGS) as? AppResult.Success)?.data?.tracks?.take(4)?.map { SearchResultItem.TrackResult(it) } ?: emptyList()
+                    spotifyMatches + localMatches + radioMatches + primaryResult.data.items
                 } else {
                     primaryResult.data.items
                 }
@@ -185,10 +199,10 @@ class SearchRepository(
         if (q.isBlank()) return recentList.take(6)
 
         val builtInKeywords = listOf(
-            "NeuroDancer", "Night Drive", "Cyber Mix", "Electronic", "Synthwave",
-            "Darksynth", "Retrowave", "Vector 7", "Hologram Boy", "CyberValkyrie",
-            "PulseMatrix", "VoidEcho", "Focus Mode", "Electric Dreams", "Midnight Pulse",
-            "Tokyo Overdrive", "Synthetic Heart", "Glitch Odyssey", "Ambient Space", "Techno Pulse"
+            "The Weeknd", "Blinding Lights", "Kavinsky", "Nightcall", "Daft Punk",
+            "Harder Better Faster", "M83", "Midnight City", "Carpenter Brut", "Turbo Killer",
+            "The Midnight", "Days of Thunder", "Gunship", "Tech Noir", "HOME",
+            "Resonance", "FM-84", "Running in the Night", "Starboy", "Synthwave", "French Touch"
         )
 
         val matches = (recentList + builtInKeywords)

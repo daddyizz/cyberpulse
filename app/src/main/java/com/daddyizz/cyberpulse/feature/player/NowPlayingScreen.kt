@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.sp
 import com.daddyizz.cyberpulse.core.designsystem.*
 import com.daddyizz.cyberpulse.core.model.MusicSource
 import com.daddyizz.cyberpulse.core.model.Track
+import com.daddyizz.cyberpulse.core.visualizer.VisualizerMode
+import com.daddyizz.cyberpulse.feature.player.visualizer.VisualizerView
 
 @Composable
 fun NowPlayingScreen(
@@ -32,6 +34,7 @@ fun NowPlayingScreen(
     onOpenArtist: ((String) -> Unit)? = null,
     onOpenAlbum: ((String) -> Unit)? = null,
     onOpenTrackActions: ((Track) -> Unit)? = null,
+    onNavigateToPro: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -94,25 +97,49 @@ fun NowPlayingScreen(
                                 modifier = Modifier.size(32.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.height(CyberSpacing.xs))
+                        PlayerModeSelector(
+                            activeMode = uiState.activePlayerMode,
+                            onSelectMode = { mode ->
+                                if (mode == NowPlayingMode.LYRICS) {
+                                    onOpenLyrics()
+                                } else {
+                                    viewModel.setPlayerMode(mode)
+                                }
+                            },
+                            colors = colors
+                        )
                         Spacer(modifier = Modifier.height(CyberSpacing.sm))
-                        Box(
-                            modifier = Modifier
-                                .size(260.dp)
-                                .clip(RoundedCornerShape(CyberRadius.lg))
-                                .border(1.5.dp, colors.borderHighlight, RoundedCornerShape(CyberRadius.lg)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CyberArtworkPlaceholder(
-                                keyName = track.placeholderArtworkKey,
-                                modifier = Modifier.fillMaxSize(),
-                                shape = RoundedCornerShape(CyberRadius.lg)
+                        if (uiState.activePlayerMode == NowPlayingMode.VISUALIZER) {
+                            VisualizerView(
+                                state = uiState.visualizerState,
+                                onSelectMode = { viewModel.selectVisualizerMode(it) },
+                                onUnlockPro = { onNavigateToPro?.invoke() },
+                                modifier = Modifier
+                                    .size(260.dp)
+                                    .clip(RoundedCornerShape(CyberRadius.lg))
+                                    .border(1.5.dp, colors.borderHighlight, RoundedCornerShape(CyberRadius.lg))
                             )
-                            if (uiState.isBuffering) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(48.dp),
-                                    color = colors.primaryAccent,
-                                    strokeWidth = 3.dp
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(260.dp)
+                                    .clip(RoundedCornerShape(CyberRadius.lg))
+                                    .border(1.5.dp, colors.borderHighlight, RoundedCornerShape(CyberRadius.lg)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CyberArtworkPlaceholder(
+                                    keyName = track.placeholderArtworkKey,
+                                    modifier = Modifier.fillMaxSize(),
+                                    shape = RoundedCornerShape(CyberRadius.lg)
                                 )
+                                if (uiState.isBuffering) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(48.dp),
+                                        color = colors.primaryAccent,
+                                        strokeWidth = 3.dp
+                                    )
+                                }
                             }
                         }
                         Spacer(modifier = Modifier.height(CyberSpacing.md))
@@ -295,25 +322,51 @@ fun NowPlayingScreen(
                         }
                     }
 
-                    // Hero Artwork
-                    Box(
-                        modifier = Modifier
-                            .size(280.dp)
-                            .clip(RoundedCornerShape(CyberRadius.lg))
-                            .border(1.5.dp, colors.borderHighlight, RoundedCornerShape(CyberRadius.lg)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CyberArtworkPlaceholder(
-                            keyName = track.placeholderArtworkKey,
-                            modifier = Modifier.fillMaxSize(),
-                            shape = RoundedCornerShape(CyberRadius.lg)
+                    // Mode Selector Row (Artwork / Visualizer / Lyrics)
+                    PlayerModeSelector(
+                        activeMode = uiState.activePlayerMode,
+                        onSelectMode = { mode ->
+                            if (mode == NowPlayingMode.LYRICS) {
+                                onOpenLyrics()
+                            } else {
+                                viewModel.setPlayerMode(mode)
+                            }
+                        },
+                        colors = colors
+                    )
+
+                    // Hero Artwork / Audio Visualizer
+                    if (uiState.activePlayerMode == NowPlayingMode.VISUALIZER) {
+                        VisualizerView(
+                            state = uiState.visualizerState,
+                            onSelectMode = { viewModel.selectVisualizerMode(it) },
+                            onUnlockPro = { onNavigateToPro?.invoke() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(280.dp)
+                                .clip(RoundedCornerShape(CyberRadius.lg))
+                                .border(1.5.dp, colors.borderHighlight, RoundedCornerShape(CyberRadius.lg))
                         )
-                        if (uiState.isBuffering) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(48.dp),
-                                color = colors.primaryAccent,
-                                strokeWidth = 3.dp
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(280.dp)
+                                .clip(RoundedCornerShape(CyberRadius.lg))
+                                .border(1.5.dp, colors.borderHighlight, RoundedCornerShape(CyberRadius.lg)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CyberArtworkPlaceholder(
+                                keyName = track.placeholderArtworkKey,
+                                modifier = Modifier.fillMaxSize(),
+                                shape = RoundedCornerShape(CyberRadius.lg)
                             )
+                            if (uiState.isBuffering) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(48.dp),
+                                    color = colors.primaryAccent,
+                                    strokeWidth = 3.dp
+                                )
+                            }
                         }
                     }
 
@@ -657,6 +710,56 @@ private fun BottomActionsRow(
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.textPrimary
             )
+        }
+    }
+}
+
+@Composable
+fun PlayerModeSelector(
+    activeMode: NowPlayingMode,
+    onSelectMode: (NowPlayingMode) -> Unit,
+    colors: CyberPulseColors,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(CyberRadius.full))
+            .background(colors.surfaceSecondary)
+            .border(1.dp, colors.border, RoundedCornerShape(CyberRadius.full))
+            .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val modes = listOf(
+            Triple(NowPlayingMode.ARTWORK, "Cover", Icons.Default.Album),
+            Triple(NowPlayingMode.VISUALIZER, "Visualizer", Icons.Default.GraphicEq),
+            Triple(NowPlayingMode.LYRICS, "Lyrics", Icons.Default.Lyrics)
+        )
+
+        modes.forEach { (mode, label, icon) ->
+            val isSelected = activeMode == mode
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(CyberRadius.full))
+                    .background(if (isSelected) colors.primaryAccent.copy(alpha = 0.2f) else Color.Transparent)
+                    .clickable { onSelectMode(mode) }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = if (isSelected) colors.primaryAccent else colors.textMuted,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isSelected) colors.primaryAccent else colors.textSecondary
+                )
+            }
         }
     }
 }

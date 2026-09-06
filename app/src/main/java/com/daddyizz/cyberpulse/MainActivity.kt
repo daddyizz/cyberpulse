@@ -45,6 +45,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Block 7: Gather UMP Privacy Consent at app launch
+        CyberPulseApplication.instance.consentManager.gatherConsent(this)
+
         preferencesRepository = UserPreferencesRepository(applicationContext)
         musicRepository = MusicRepository(context = applicationContext)
 

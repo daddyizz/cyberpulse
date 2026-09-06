@@ -44,7 +44,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
       {/* Hero Header */}
       <div className="relative rounded-3xl overflow-hidden p-6 border border-[#171B28] bg-gradient-to-b from-[#171B28]/80 to-[#10131C]/90 backdrop-blur-xl flex flex-col items-center text-center">
         <div className="w-44 h-44 rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_35px_rgba(255,46,209,0.2)] mb-4">
-          <CyberArtwork keyName={playlist.artworkKey} />
+          <CyberArtwork keyName={playlist.artworkKey} artworkUrl={playlist.artworkUrl} />
         </div>
 
         <h1 className="text-2xl font-black uppercase tracking-tight text-[#F7F8FC] mb-1">
@@ -116,7 +116,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
             >
               <span className="w-6 text-center text-xs font-mono text-[#61697C]">{idx + 1}</span>
               <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-white/5">
-                <CyberArtwork keyName={trk.placeholderArtworkKey} />
+                <CyberArtwork keyName={trk.placeholderArtworkKey} artworkUrl={trk.artworkUrl} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-bold text-[#F7F8FC] truncate">{trk.title}</div>

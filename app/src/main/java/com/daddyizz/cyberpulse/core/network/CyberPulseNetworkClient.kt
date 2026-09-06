@@ -56,4 +56,13 @@ object CyberPulseNetworkClient {
             .build()
             .create(YouTubeApiService::class.java)
     }
+
+    val spotifyService: SpotifyApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.spotify.com/")
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(SpotifyApiService::class.java)
+    }
 }

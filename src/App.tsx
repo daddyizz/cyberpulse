@@ -20,6 +20,8 @@ const DEFAULT_PREFERENCES: AppPreferences = {
 export default function App() {
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [isTabletView, setIsTabletView] = useState<boolean>(false);
+  const [isAppMinimized, setIsAppMinimized] = useState<boolean>(false);
+  const [isPlaybackActive, setIsPlaybackActive] = useState<boolean>(false);
   const [preferences, setPreferences] = useState<AppPreferences>(() => {
     try {
       const saved = localStorage.getItem('cyberpulse_preferences');
@@ -107,20 +109,28 @@ export default function App() {
 
       {/* Main Content View */}
       <main className="flex-1 flex flex-col">
-        {activeTab === 'preview' ? (
+        <div className={activeTab === 'preview' ? 'flex flex-col flex-1' : 'hidden'}>
           <AndroidFrame
             themeMode={preferences.theme}
             isTabletView={isTabletView}
+            isAppMinimized={isAppMinimized}
+            isPlaying={isPlaybackActive}
             onToggleViewMode={() => setIsTabletView(!isTabletView)}
             onResetOnboarding={handleResetOnboarding}
+            onToggleMinimize={() => setIsAppMinimized(!isAppMinimized)}
           >
             <CyberPulseApp
               isTabletView={isTabletView}
               preferences={preferences}
               onUpdatePreferences={handleUpdatePreferences}
+              isAppMinimized={isAppMinimized}
+              onToggleMinimize={() => setIsAppMinimized(!isAppMinimized)}
+              onPlaybackStateChange={(playing) => setIsPlaybackActive(playing)}
             />
           </AndroidFrame>
-        ) : (
+        </div>
+
+        {activeTab === 'code' && (
           <div className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col">
             <CodebaseExplorer />
           </div>

@@ -22,6 +22,8 @@ import com.daddyizz.cyberpulse.core.data.UserPreferencesRepository
 import com.daddyizz.cyberpulse.core.designsystem.*
 import com.daddyizz.cyberpulse.core.model.Track
 import com.daddyizz.cyberpulse.core.player.PlaybackConnection
+import com.daddyizz.cyberpulse.feature.aiplaylist.AiPlaylistScreen
+import com.daddyizz.cyberpulse.feature.cyberdj.CyberDjScreen
 import com.daddyizz.cyberpulse.feature.details.AlbumDetailScreen
 import com.daddyizz.cyberpulse.feature.details.ArtistDetailScreen
 import com.daddyizz.cyberpulse.feature.details.PlaylistDetailScreen
@@ -36,6 +38,9 @@ import com.daddyizz.cyberpulse.feature.player.NowPlayingScreen
 import com.daddyizz.cyberpulse.feature.player.PlayerViewModel
 import com.daddyizz.cyberpulse.feature.player.QueueBottomSheet
 import com.daddyizz.cyberpulse.feature.player.TrackActionBottomSheet
+import com.daddyizz.cyberpulse.feature.player.lyrics.LyricsScreen
+import com.daddyizz.cyberpulse.feature.player.visualizer.VisualizerView
+import com.daddyizz.cyberpulse.feature.pro.CyberPulseProScreen
 import com.daddyizz.cyberpulse.feature.profile.ProfileScreen
 import com.daddyizz.cyberpulse.feature.radio.CyberRadioScreen
 import com.daddyizz.cyberpulse.feature.search.SearchScreen
@@ -65,6 +70,18 @@ fun CyberPulseNavHost(
     val settingsViewModel = remember { SettingsViewModel(preferencesRepository) }
     val playerViewModel = remember { PlayerViewModel(musicRepository, playbackConnection) }
     val playerState by playerViewModel.uiState.collectAsState()
+
+    val statsViewModel = remember {
+        com.daddyizz.cyberpulse.feature.stats.ListeningStatsViewModel(
+            analyticsRepository = com.daddyizz.cyberpulse.CyberPulseApplication.instance.listeningAnalyticsRepository,
+            entitlementRepository = com.daddyizz.cyberpulse.CyberPulseApplication.instance.entitlementRepository
+        )
+    }
+    val replayViewModel = remember {
+        com.daddyizz.cyberpulse.feature.replay.CyberPulseReplayViewModel(
+            analyticsRepository = com.daddyizz.cyberpulse.CyberPulseApplication.instance.listeningAnalyticsRepository
+        )
+    }
 
     var showNowPlayingModal by remember { mutableStateOf(false) }
     var activeComingSoonDialogTitle by remember { mutableStateOf<String?>(null) }
@@ -160,7 +177,10 @@ fun CyberPulseNavHost(
                                 navController.navigate(Screen.ArtistDetail.createRoute(artist.id))
                             },
                             onProfileClick = { navController.navigate(Screen.Profile.route) },
-                            onSettingsClick = { navController.navigate(Screen.Settings.route) }
+                            onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                            onStatsClick = { navController.navigate(Screen.ListeningStats.route) },
+                            onCyberDjClick = { navController.navigate(Screen.CyberDj.route) },
+                            onAiPlaylistClick = { navController.navigate(Screen.AiPlaylist.route) }
                         )
                     }
 
@@ -190,6 +210,9 @@ fun CyberPulseNavHost(
                             onCategoryClick = { category ->
                                 searchViewModel.onQueryChanged(category)
                                 navController.navigate(Screen.Search.route)
+                            },
+                            onNavigateToCyberRadio = {
+                                navController.navigate(Screen.CyberRadio.route)
                             }
                         )
                     }
@@ -205,6 +228,12 @@ fun CyberPulseNavHost(
                             },
                             onTrackAction = { track ->
                                 activeTrackAction = track
+                            },
+                            onNavigateToOnThisDevice = {
+                                navController.navigate(Screen.OnThisDevice.route)
+                            },
+                            onNavigateToCyberRadio = {
+                                navController.navigate(Screen.CyberRadio.route)
                             }
                         )
                     }
@@ -212,6 +241,9 @@ fun CyberPulseNavHost(
                     composable(Screen.Profile.route) {
                         ProfileScreen(
                             onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                            onNavigateToPro = { navController.navigate(Screen.Pro.route) },
+                            onNavigateToStats = { navController.navigate(Screen.ListeningStats.route) },
+                            onNavigateToReplay = { navController.navigate(Screen.CyberPulseReplay.route) },
                             onFeatureClick = { feature ->
                                 activeComingSoonDialogTitle = feature
                             }
@@ -222,6 +254,7 @@ fun CyberPulseNavHost(
                         SettingsScreen(
                             viewModel = settingsViewModel,
                             onBackClick = { navController.popBackStack() },
+                            onNavigateToPro = { navController.navigate(Screen.Pro.route) },
                             onComingSoon = { feature ->
                                 activeComingSoonDialogTitle = feature
                             },
@@ -279,6 +312,98 @@ fun CyberPulseNavHost(
                             onTrackAction = { track -> activeTrackAction = track }
                         )
                     }
+
+                    composable(Screen.OnThisDevice.route) {
+                        OnThisDeviceScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onTrackClick = { track ->
+                                playerViewModel.playTrack(track)
+                            },
+                            onPlayAll = { tracks ->
+                                playerViewModel.playQueue(tracks, 0)
+                            },
+                            onTrackActionClick = { track ->
+                                activeTrackAction = track
+                            }
+                        )
+                    }
+
+                    composable(Screen.CyberRadio.route) {
+                        CyberRadioScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onStationPlay = { track ->
+                                playerViewModel.playTrack(track)
+                            },
+                            currentPlayingTrack = playerState.currentTrack,
+                            isPlaying = playerState.isPlaying
+                        )
+                    }
+
+                    // Block 7: CyberPulse Pro Membership & Subscription Screen
+                    composable(Screen.Pro.route) {
+                        CyberPulseProScreen(
+                            onBackClick = { navController.popBackStack() }
+                        )
+                    }
+
+                    // Block 8: Cyber DJ Continuous Discovery
+                    composable(Screen.CyberDj.route) {
+                        CyberDjScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToPro = { navController.navigate(Screen.Pro.route) }
+                        )
+                    }
+
+                    // Block 8: AI Playlist Generator
+                    composable(Screen.AiPlaylist.route) {
+                        AiPlaylistScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToPro = { navController.navigate(Screen.Pro.route) }
+                        )
+                    }
+
+                    // Block 9A: Dedicated Synced Lyrics Screen
+                    composable(Screen.Lyrics.route) {
+                        LyricsScreen(
+                            track = playerState.currentTrack,
+                            lyricsResult = playerState.lyricsResult,
+                            currentPositionMs = playerState.currentPositionSeconds * 1000L,
+                            isPlaying = playerState.isPlaying,
+                            onSeekToMs = { playerViewModel.seekToLyricMs(it) },
+                            onTogglePlayPause = { playerViewModel.togglePlayPause() },
+                            onClose = { navController.popBackStack() }
+                        )
+                    }
+
+                    // Block 9A: Dedicated Audio Visualizer Screen
+                    composable(Screen.Visualizer.route) {
+                        VisualizerView(
+                            state = playerState.visualizerState,
+                            onSelectMode = { playerViewModel.selectVisualizerMode(it) },
+                            onUnlockPro = { navController.navigate(Screen.Pro.route) },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        )
+                    }
+
+                    // Block 9B: Advanced Listening Statistics Screen
+                    composable(Screen.ListeningStats.route) {
+                        com.daddyizz.cyberpulse.feature.stats.ListeningStatsScreen(
+                            viewModel = statsViewModel,
+                            onBackClick = { navController.popBackStack() },
+                            onNavigateToReplay = { navController.navigate(Screen.CyberPulseReplay.route) },
+                            onNavigateToPro = { navController.navigate(Screen.Pro.route) }
+                        )
+                    }
+
+                    // Block 9B: CyberPulse Replay Screen
+                    composable(Screen.CyberPulseReplay.route) {
+                        com.daddyizz.cyberpulse.feature.replay.CyberPulseReplayScreen(
+                            viewModel = replayViewModel,
+                            onClose = { navController.popBackStack() }
+                        )
+                    }
                 }
 
                 // Docked Bottom Nav + Mini Player for standard screens
@@ -333,7 +458,11 @@ fun CyberPulseNavHost(
                     viewModel = playerViewModel,
                     onCollapseClick = { showNowPlayingModal = false },
                     onOpenLyrics = { showLyricsDialog = true },
-                    onOpenQueue = { showQueueSheet = true }
+                    onOpenQueue = { showQueueSheet = true },
+                    onNavigateToPro = {
+                        showNowPlayingModal = false
+                        navController.navigate(Screen.Pro.route)
+                    }
                 )
             }
         }
@@ -391,35 +520,23 @@ fun CyberPulseNavHost(
             )
         }
 
-        // Lyrics Dialog
-        if (showLyricsDialog) {
-            AlertDialog(
-                onDismissRequest = { showLyricsDialog = false },
-                containerColor = colors.surfaceElevated,
-                title = {
-                    Text("Synced Cyber Lyrics", style = MaterialTheme.typography.titleLarge, color = colors.textPrimary)
-                },
-                text = {
-                    Column {
-                        Text(
-                            text = "“Neon veins across the concrete grid,\nPulses rising where the shadows hid,\nSynthetic dreams beneath the chrome,\nCyberPulse is calling home.”",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = colors.primaryAccent
-                        )
-                        Spacer(modifier = Modifier.height(CyberSpacing.md))
-                        Text(
-                            text = "Time-synced LRC provider will be integrated in future blocks.",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = colors.textMuted
-                        )
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showLyricsDialog = false }) {
-                        Text("Close", color = colors.primaryAccent)
-                    }
-                }
-            )
+        // Block 9A: Full-Screen Synced Lyrics Modal
+        if (showLyricsDialog && playerState.currentTrack != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+            ) {
+                LyricsScreen(
+                    track = playerState.currentTrack,
+                    lyricsResult = playerState.lyricsResult,
+                    currentPositionMs = playerState.currentPositionSeconds * 1000L,
+                    isPlaying = playerState.isPlaying,
+                    onSeekToMs = { playerViewModel.seekToLyricMs(it) },
+                    onTogglePlayPause = { playerViewModel.togglePlayPause() },
+                    onClose = { showLyricsDialog = false }
+                )
+            }
         }
     }
 }

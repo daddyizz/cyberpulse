@@ -18,6 +18,7 @@ object MediaLibraryTree {
     const val ROOT_ID = "CYBERPULSE_ROOT"
 
     // Root-level browsing categories
+    const val NODE_CYBER_DJ = "NODE_CYBER_DJ"
     const val NODE_LOCAL_MUSIC = "NODE_LOCAL_MUSIC"
     const val NODE_RADIO = "NODE_RADIO"
     const val NODE_TEST_MEDIA = "NODE_TEST_MEDIA"
@@ -55,14 +56,17 @@ object MediaLibraryTree {
     }
 
     fun getRootChildren(): List<MediaItem> {
-        return listOf(
-            buildBrowsableCategory(NODE_LOCAL_MUSIC, "On This Device", "Local Audio Files"),
-            buildBrowsableCategory(NODE_RADIO, "Cyber Radio", "Live Internet Radio Broadcasts"),
-            buildBrowsableCategory(NODE_TEST_MEDIA, "CyberPulse Test Tracks", "Verified Reference Audio"),
-            buildBrowsableCategory(NODE_RECENTLY_PLAYED, "Recently Played", "Recent Listening History"),
-            buildBrowsableCategory(NODE_LIKED, "Liked Pulses", "Favorite Tracks"),
-            buildBrowsableCategory(NODE_PLAYLISTS, "Playlists", "Custom Mixes & Demo Playlists")
-        )
+        return buildList {
+            add(buildBrowsableCategory(NODE_CYBER_DJ, "Cyber DJ", "Intelligent continuous listening modes"))
+            add(buildBrowsableCategory(NODE_LOCAL_MUSIC, "On This Device", "Local Audio Files"))
+            add(buildBrowsableCategory(NODE_RADIO, "Cyber Radio", "Live Internet Radio Broadcasts"))
+            if (com.daddyizz.cyberpulse.BuildConfig.DEBUG) {
+                add(buildBrowsableCategory(NODE_TEST_MEDIA, "CyberPulse Test Tracks", "Verified Reference Audio"))
+            }
+            add(buildBrowsableCategory(NODE_RECENTLY_PLAYED, "Recently Played", "Recent Listening History"))
+            add(buildBrowsableCategory(NODE_LIKED, "Liked Pulses", "Favorite Tracks"))
+            add(buildBrowsableCategory(NODE_PLAYLISTS, "Playlists", "Custom Mixes & Demo Playlists"))
+        }
     }
 
     fun getChildrenForNode(nodeId: String): List<MediaItem> {
@@ -73,6 +77,39 @@ object MediaLibraryTree {
 
         return when {
             nodeId == ROOT_ID -> getRootChildren()
+
+            // === Cyber DJ (Android Auto Playable-Now Modes) ===
+            nodeId == NODE_CYBER_DJ -> {
+                listOf(
+                    buildBrowsableCategory("dj_mode_drive", "Drive", "Highway cruise • Steady energy"),
+                    buildBrowsableCategory("dj_mode_workout", "Workout", "High-BPM energy surge"),
+                    buildBrowsableCategory("dj_mode_focus", "Focus", "Deep cognitive momentum"),
+                    buildBrowsableCategory("dj_mode_chill", "Chill", "Mellow ambient frequencies"),
+                    buildBrowsableCategory("dj_mode_throwback", "Throwback", "Retro 80s synthwave"),
+                    buildBrowsableCategory("dj_mode_night_drive", "Night Drive", "Atmospheric neon flow")
+                )
+            }
+            nodeId.startsWith("dj_mode_") -> {
+                val modeKey = nodeId.removePrefix("dj_mode_")
+                val allPlayable = (localProvider?.getTracks() ?: emptyList()) +
+                        CyberPulseTestMedia.ALL_TEST_TRACKS +
+                        (musicRepo?.fallbackProvider?.getAllTracks() ?: emptyList())
+                val filtered = when (modeKey) {
+                    "drive" -> allPlayable.filter { it.title.contains("drive", ignoreCase = true) || it.title.contains("synth", ignoreCase = true) }
+                    "workout" -> allPlayable.filter { it.title.contains("pulse", ignoreCase = true) || it.title.contains("overdrive", ignoreCase = true) }
+                    "focus" -> allPlayable.filter { it.title.contains("focus", ignoreCase = true) || it.title.contains("cyber", ignoreCase = true) }
+                    "chill" -> allPlayable.filter { it.title.contains("chill", ignoreCase = true) || it.title.contains("rain", ignoreCase = true) }
+                    "throwback" -> allPlayable.filter { it.title.contains("retro", ignoreCase = true) || it.title.contains("neon", ignoreCase = true) }
+                    "night_drive" -> allPlayable.filter { it.title.contains("night", ignoreCase = true) || it.title.contains("drive", ignoreCase = true) }
+                    else -> allPlayable
+                }
+                val candidates = filtered.ifEmpty { allPlayable }
+                // Strictly Media3 direct playable only - zero YouTube embedded items
+                candidates.filter { track ->
+                    val source = PlaybackSourceResolver.resolveSource(track)
+                    source.supportsMedia3Direct()
+                }.map { MediaItemMapper.toMediaItem(it) }
+            }
 
             // === Local Music Nodes ===
             nodeId == NODE_LOCAL_MUSIC -> {
@@ -177,12 +214,16 @@ object MediaLibraryTree {
 
             // === Recently Played ===
             nodeId == NODE_RECENTLY_PLAYED -> {
-                musicRepo?.recentlyPlayed?.value?.map { MediaItemMapper.toMediaItem(it) } ?: emptyList()
+                musicRepo?.recentlyPlayed?.value
+                    ?.filter { PlaybackSourceResolver.resolveSource(it).supportsMedia3Direct() }
+                    ?.map { MediaItemMapper.toMediaItem(it) } ?: emptyList()
             }
 
             // === Liked Songs ===
             nodeId == NODE_LIKED -> {
-                musicRepo?.getLikedTracks()?.map { MediaItemMapper.toMediaItem(it) } ?: emptyList()
+                musicRepo?.getLikedTracks()
+                    ?.filter { PlaybackSourceResolver.resolveSource(it).supportsMedia3Direct() }
+                    ?.map { MediaItemMapper.toMediaItem(it) } ?: emptyList()
             }
 
             // === Playlists ===
@@ -195,7 +236,9 @@ object MediaLibraryTree {
             nodeId.startsWith("playlist_") -> {
                 val plId = nodeId.removePrefix("playlist_")
                 val pl = musicRepo?.getAllPlaylists()?.firstOrNull { it.id == plId }
-                pl?.tracks?.map { MediaItemMapper.toMediaItem(it) } ?: emptyList()
+                pl?.tracks
+                    ?.filter { PlaybackSourceResolver.resolveSource(it).supportsMedia3Direct() }
+                    ?.map { MediaItemMapper.toMediaItem(it) } ?: emptyList()
             }
 
             else -> emptyList()

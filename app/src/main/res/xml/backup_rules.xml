@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
+    <!-- Include user-authored preferences and playlist metadata -->
     <include domain="sharedpref" path="."/>
+    <!-- Exclude sensitive auth tokens, credentials, and transient cache state -->
+    <exclude domain="sharedpref" path="cyberpulse_auth_prefs.xml"/>
+    <exclude domain="sharedpref" path="com.google.android.gms.signin.xml"/>
+    <exclude domain="root" path="databases/cyberpulse_sync_queue.db"/>
+    <exclude domain="cache" path="."/>
 </full-backup-content>

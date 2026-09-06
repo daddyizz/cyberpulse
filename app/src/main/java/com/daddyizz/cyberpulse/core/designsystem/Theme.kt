@@ -71,15 +71,34 @@ val OledBlackPalette = CyberPulseColors(
     textMuted = CyberTextMuted
 )
 
+/**
+ * Block 7: CyberPulse Pro Exclusive Theme — Synthwave Pro.
+ * Deep neon sunset violet palette, hot magenta accents, and retro golden amber glow.
+ */
+val SynthwaveProPalette = CyberPulseColors(
+    background = Color(0xFF130924),
+    surface = Color(0xFF1E1038),
+    surfaceElevated = Color(0xFF2E1752),
+    surfaceCard = Color(0xFF251345),
+    border = Color(0xFFFF5E3A).copy(alpha = 0.35f),
+    primaryAccent = Color(0xFFFF2ED1),
+    secondaryAccent = Color(0xFFFF7B00),
+    tertiaryAccent = Color(0xFF00F5FF),
+    successAccent = Color(0xFF00FFB2),
+    textPrimary = Color(0xFFFFF0F5),
+    textSecondary = Color(0xFFD6BFE6),
+    textMuted = Color(0xFF8E73A6)
+)
+
 @Composable
 fun CyberPulseTheme(
     themeName: String = Constants.THEME_CYBERPUNK,
     content: @Composable () -> Unit
 ) {
-    val cyberColors = if (themeName == Constants.THEME_OLED_BLACK) {
-        OledBlackPalette
-    } else {
-        CyberpunkDarkPalette
+    val cyberColors = when (themeName) {
+        Constants.THEME_OLED_BLACK -> OledBlackPalette
+        Constants.THEME_SYNTHWAVE_PRO -> SynthwaveProPalette
+        else -> CyberpunkDarkPalette
     }
 
     val materialColorScheme = darkColorScheme(
@@ -104,3 +123,15 @@ fun CyberPulseTheme(
         )
     }
 }
+
+object CyberPulseThemeDefaults {
+    val colors: CyberPulseColors
+        @Composable
+        get() = LocalCyberPulseColors.current
+}
+
+typealias CyberColors = CyberPulseColors
+
+val CyberPulseColors.backgroundSecondary: Color get() = surface
+val CyberPulseColors.surfaceSecondary: Color get() = surface
+val CyberPulseColors.borderHighlight: Color get() = border

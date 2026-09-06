@@ -9,6 +9,7 @@ enum class MusicSource {
     LOCAL_DEMO,
     CYBERPULSE_TEST,
     YOUTUBE,
+    SPOTIFY,
     LOCAL,
     LOCAL_STORAGE,
     RADIO,

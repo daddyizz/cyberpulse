@@ -203,11 +203,11 @@ class DemoMusicSourceProvider : MusicSourceProvider {
     override val providerSource: MusicSource = MusicSource.DEMO
 
     private val demoTracks = listOf(
-        Track("trk_01", "Night Drive", "NeuroDancer", "Neon Drift LP", "neon_horizon", 214, MusicSource.DEMO),
-        Track("trk_02", "Cyber Mix", "PulseMatrix", "Quantum Waves", "purple_pulse", 188, MusicSource.DEMO),
-        Track("trk_03", "Focus Mode", "VoidEcho", "Subliminal Flow", "digital_rain", 302, MusicSource.DEMO),
-        Track("trk_04", "Electric Dreams", "Hologram Boy", "Silicon Memories", "electric_dream", 227, MusicSource.DEMO),
-        Track("trk_05", "Midnight Pulse", "CyberValkyrie", "Chrome Angels", "midnight_circuit", 245, MusicSource.DEMO)
+        Track("trk_01", "Blinding Lights", "The Weeknd", "After Hours", "neon_horizon", 200, MusicSource.DEMO),
+        Track("trk_02", "Nightcall", "Kavinsky", "OutRun", "purple_pulse", 259, MusicSource.DEMO),
+        Track("trk_03", "Harder, Better, Faster, Stronger", "Daft Punk", "Discovery", "cyber_grid", 224, MusicSource.DEMO),
+        Track("trk_04", "Midnight City", "M83", "Hurry Up, We're Dreaming", "neon_horizon", 243, MusicSource.DEMO),
+        Track("trk_05", "Turbo Killer", "Carpenter Brut", "Trilogy", "purple_pulse", 208, MusicSource.DEMO)
     )
 
     override suspend fun search(query: String): List<Track> = demoTracks.filter {
@@ -389,6 +389,32 @@ class SearchRepository(
 // - Add to Queue (Appends track to authoritative queue)
 // - Toggle Like / Add to User Playlist dialog
 // - Source Information & YouTube Terms compliance details`
+  },
+  {
+    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/player/lyrics/LyricsScreen.kt',
+    name: 'LyricsScreen.kt',
+    type: 'file',
+    language: 'kotlin',
+    description: 'Block 9A Synced Cyber Lyrics with LRC Parsing & Line Seeking',
+    content: `package com.daddyizz.cyberpulse.feature.player.lyrics
+
+// - Synced lyrics parser & auto-scroll engine
+// - Tap-to-seek to lyric timestamp in Media3
+// - Support for plain, synchronized, and missing lyrics fallback
+// - Copyright compliant provider abstraction (Local & Licensed only)`
+  },
+  {
+    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/player/visualizer/VisualizerCanvas.kt',
+    name: 'VisualizerCanvas.kt',
+    type: 'file',
+    language: 'kotlin',
+    description: 'Block 9A Audio Visualizer Canvas with 5 Cyber Modes & Pro Gating',
+    content: `package com.daddyizz.cyberpulse.feature.player.visualizer
+
+// - 5 Cyber Visualizer Modes: Neon Wave, Spectrum Pulse, Cyber Grid, Orbital, Particle Flow
+// - CyberPulse Pro Entitlement gating for advanced visualizer modes
+// - YouTube Protected Source detection: switches to Ambient Simulated Pulse
+// - Hardware-accelerated Compose Canvas rendering`
   },
   {
     path: 'README.md',

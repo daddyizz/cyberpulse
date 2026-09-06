@@ -20,4 +20,5 @@ object Constants {
     // Themes
     const val THEME_CYBERPUNK = "CYBERPUNK"
     const val THEME_OLED_BLACK = "OLED_BLACK"
+    const val THEME_SYNTHWAVE_PRO = "SYNTHWAVE_PRO"
 }

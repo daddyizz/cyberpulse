@@ -1,15 +1,15 @@
-## CyberPulse Music - Local Configuration & API Secrets
-# Copy this file to 'local.properties' and set your keys.
+## CyberPulse Music - Local Configuration Template
+# Copy this file to 'local.properties' and configure your environment.
 # NEVER commit 'local.properties' to git.
 
-# Location of the SDK. This is only used by Gradle.
-# For customization when using a Version Control System, please read the
-# header note.
-sdk.dir=/Users/username/Library/Android/sdk
+sdk.dir=
 
-# Permitted YouTube Data API v3 Key (Optional for real public metadata query)
-# If empty, CyberPulse defaults to the secure CyberPulse backend proxy or local cached catalog.
 YOUTUBE_API_KEY=
+SPOTIFY_CLIENT_ID=
+CYBERPULSE_API_BASE_URL=
+ADMOB_APP_ID=
 
-# Secure CyberPulse Backend Proxy URL (recommended for production metadata caching & quota protection)
-CYBERPULSE_PROXY_URL=https://api.cyberpulse.internal/v1
+RELEASE_STORE_FILE=
+RELEASE_STORE_PASSWORD=
+RELEASE_KEY_ALIAS=
+RELEASE_KEY_PASSWORD=

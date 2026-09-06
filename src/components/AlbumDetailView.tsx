@@ -46,7 +46,7 @@ export const AlbumDetailView: React.FC<AlbumDetailViewProps> = ({
       {/* Hero Header */}
       <div className="relative rounded-3xl overflow-hidden p-6 border border-[#171B28] bg-gradient-to-b from-[#171B28]/80 to-[#10131C]/90 backdrop-blur-xl flex flex-col items-center text-center">
         <div className="w-44 h-44 rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_35px_rgba(0,245,255,0.2)] mb-4">
-          <CyberArtwork keyName={album.artworkKey} />
+          <CyberArtwork keyName={album.artworkKey} artworkUrl={album.artworkUrl} />
         </div>
 
         <h1 className="text-2xl font-black uppercase tracking-tight text-[#F7F8FC] mb-1">

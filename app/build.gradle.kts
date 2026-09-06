@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.daddyizz.cyberpulse"
-    compileSdk = 34
+    compileSdk = 36
 
     buildFeatures {
         compose = true
@@ -16,26 +16,49 @@ android {
     defaultConfig {
         applicationId = "com.daddyizz.cyberpulse"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 2
-        versionName = "1.0.0-block2"
+        targetSdk = 36
+        versionCode = 10
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
 
-        // Safe reading of API key or backend proxy from local.properties
+        // Safe reading of public client IDs or backend proxy from local.properties
         val localProperties = java.util.Properties()
         val localPropertiesFile = rootProject.file("local.properties")
         if (localPropertiesFile.exists()) {
             localProperties.load(java.io.FileInputStream(localPropertiesFile))
         }
         val apiKey = localProperties.getProperty("YOUTUBE_API_KEY") ?: ""
-        val proxyUrl = localProperties.getProperty("CYBERPULSE_PROXY_URL") ?: "https://api.cyberpulse.internal/v1"
+        val proxyUrl = localProperties.getProperty("CYBERPULSE_API_BASE_URL")
+            ?: localProperties.getProperty("CYBERPULSE_PROXY_URL")
+            ?: ""
+        val spotifyClientId = localProperties.getProperty("SPOTIFY_CLIENT_ID") ?: "323d9249fe1e42b7b6d108ed5817fe08"
+        val admobAppIdRelease = localProperties.getProperty("ADMOB_APP_ID") ?: "ca-app-pub-4110950503958596~8125437952"
 
+        // SECURITY AUDIT: Client Secret MUST NOT be embedded in APK / BuildConfig.
+        // Client uses public Spotify Client ID with PKCE authorization or backend proxy token service.
         buildConfigField("String", "YOUTUBE_API_KEY", "\"$apiKey\"")
+        buildConfigField("String", "CYBERPULSE_API_BASE_URL", "\"$proxyUrl\"")
         buildConfigField("String", "CYBERPULSE_PROXY_URL", "\"$proxyUrl\"")
+        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$spotifyClientId\"")
+        buildConfigField("String", "ADMOB_APP_ID", "\"$admobAppIdRelease\"")
+
+        manifestPlaceholders["admobAppId"] = admobAppIdRelease
+    }
+
+    signingConfigs {
+        create("release") {
+            val keystorePath = localProperties.getProperty("RELEASE_STORE_FILE") ?: System.getenv("RELEASE_STORE_FILE")
+            if (keystorePath != null && rootProject.file(keystorePath).exists()) {
+                storeFile = rootProject.file(keystorePath)
+                storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD") ?: System.getenv("RELEASE_STORE_PASSWORD") ?: ""
+                keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS") ?: System.getenv("RELEASE_KEY_ALIAS") ?: ""
+                keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD") ?: System.getenv("RELEASE_KEY_PASSWORD") ?: ""
+            }
+        }
     }
 
     buildTypes {
@@ -46,11 +69,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            manifestPlaceholders["admobAppId"] = admobAppIdRelease
+            val releaseSigning = signingConfigs.getByName("release")
+            signingConfig = if (releaseSigning.storeFile != null) releaseSigning else null
         }
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
     }
 
@@ -125,6 +151,13 @@ dependencies {
     implementation("androidx.media3:media3-session:$media3Version")
     implementation("androidx.media3:media3-common:$media3Version")
     implementation("androidx.media3:media3-datasource:$media3Version")
+
+    // Block 7: Google Play Billing (Subscriptions & Products)
+    implementation("com.android.billingclient:billing-ktx:9.1.0")
+
+    // Block 7: Google Mobile Ads (AdMob Free Tier) & User Messaging Platform (UMP)
+    implementation("com.google.android.gms:play-services-ads:23.3.0")
+    implementation("com.google.android.ump:user-messaging-platform:3.1.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

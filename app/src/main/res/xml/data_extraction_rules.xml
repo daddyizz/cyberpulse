@@ -2,8 +2,14 @@
 <data-extraction-rules>
     <cloud-backup>
         <include domain="sharedpref" path="."/>
+        <exclude domain="sharedpref" path="cyberpulse_auth_prefs.xml"/>
+        <exclude domain="sharedpref" path="com.google.android.gms.signin.xml"/>
+        <exclude domain="root" path="databases/cyberpulse_sync_queue.db"/>
+        <exclude domain="cache" path="."/>
     </cloud-backup>
     <device-transfer>
         <include domain="sharedpref" path="."/>
+        <exclude domain="sharedpref" path="cyberpulse_auth_prefs.xml"/>
+        <exclude domain="cache" path="."/>
     </device-transfer>
 </data-extraction-rules>

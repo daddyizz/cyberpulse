@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.daddyizz.cyberpulse.core.ads.AdPlacement
+import com.daddyizz.cyberpulse.core.ads.CyberAdBanner
 import com.daddyizz.cyberpulse.core.designsystem.*
 import com.daddyizz.cyberpulse.core.model.*
 
@@ -307,6 +309,12 @@ fun SearchScreen(
                                 )
                             }
                         }
+                    }
+
+                    // Block 7: Visual banner ad placement after search results (Free tier only)
+                    item {
+                        Spacer(modifier = Modifier.height(CyberSpacing.sm))
+                        CyberAdBanner(placement = AdPlacement.SEARCH_RESULTS)
                     }
                 }
             }

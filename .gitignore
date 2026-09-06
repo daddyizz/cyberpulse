@@ -34,4 +34,6 @@ signing.properties
 # Local configuration
 local.properties
 google-services.json
+*service-account*.json
+*.pem
 

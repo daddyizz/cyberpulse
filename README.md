@@ -158,4 +158,70 @@ Managed by `AudioFocusInterruptionPolicy`:
 - **Block 4:** Official / Permitted Playback Source Strategy (Clean source resolution, licensed catalog endpoints, and CDN stream adapters).
 - **Block 5:** Android Auto Integration (`MediaLibrarySession` browse tree and automotive display layouts).
 - **Block 6:** Cloud backend synchronization & user account library backup.
+- **Block 7:** Google Play Billing + AdMob Monetization Gate.
+
+---
+
+## 🤖 Block 8: Cyber DJ + AI Playlist Generator + Recommendation Engine
+
+### Status: COMPLETED & VERIFIED
+
+CyberPulse Music introduces an intelligent discovery and session generation layer powered by the **Recommendation Engine**, **Cyber DJ Session Manager**, and prompt-to-queue **AI Playlist Generator**.
+
+### Architectural Breakdown
+
+#### 1. Core Grounding Principle (Zero Hallucinated Tracks)
+- **Hard Grounding:** The AI engine **NEVER** invents tracks, URLs, or metadata as if they exist.
+- **Intent Extraction & Resolution Pipeline:** 
+  1. The user's natural language prompt or active mode is analyzed for acoustic intent (mood, energy level, valence, genres, eras, tempo).
+  2. The `QueryPlanner` queries available catalogs (on-device local storage, live cyber radio streams, and verified pulse catalog).
+  3. The `CandidateRanker` scores and ranks available tracks against acoustic targets and user affinity.
+  4. Only 100% playable, source-verified tracks are rendered in the queue.
+
+#### 2. Cyber DJ — Dynamic Continuous Session
+- **Continuous Auto-Extension:** Automatically queues upcoming tracks ahead of the playhead with a rolling 8-track buffer to prevent playback starvation.
+- **8 Distinct Modes:**
+  - **Drive (Free):** Highway cruise • Steady energy (`targetEnergy = 65`)
+  - **Chill (Free):** Mellow ambient frequencies (`targetEnergy = 35`)
+  - **Workout (Free):** High-BPM energy surge (`targetEnergy = 90`)
+  - **Focus (Free):** Deep cognitive momentum (`targetEnergy = 50`)
+  - **Party (Pro):** Dancefloor peak energy (`targetEnergy = 95`)
+  - **Sleep (Pro):** Sub-bass drone & drift (`targetEnergy = 15`)
+  - **Discover (Pro):** High-novelty radar (`targetEnergy = 60`)
+  - **Throwback (Pro):** Retro 80s synthwave (`targetEnergy = 70`)
+- **Live Acoustic Controls:**
+  - **Energy Slider (1–100%):** Dynamically alters target BPM and acoustic intensity in real time.
+  - **Discovery Radar Slider (Familiar vs. Novel):** Shifts ranking weights between favorite artists and new artist discovery.
+  - **Real-Time Tuning:** "More Like This" (boosts artist affinity), "Less Like This" (penalizes style), "More Energy", "Chill Down", and "Surprise Me" (injects high-novelty acoustic jump).
+
+#### 3. AI Playlist Generator
+- **Prompt-to-Queue Synthesis:** Turns creative prompts into curated tracklists (e.g., *"Rainy midnight drive through Tokyo with warm synthwave basslines"*).
+- **Duration Targets:** Generates sessions calibrated for 15, 30, 45, 60, or 90 minutes.
+- **Source Composition Transparency:** Displays exact counts of Local, Radio, and Catalog tracks included in the mix.
+- **Session Refinement:** Supports one-tap playback, shuffling, bookmarking, and prompt re-generation.
+
+#### 4. Android Auto Compliance (`PLAYABLE_NOW` Enforcement)
+- **Automotive Safety:** Android Auto enforces distraction-free driving.
+- **Strict Filtering in `MediaLibraryTree`:** The `NODE_CYBER_DJ` browse tree strictly evaluates each candidate track using `PlaybackSourceResolver.resolveSource(track).supportsMedia3Direct()`.
+- **Zero YouTube Embeds in Car Surface:** Video streams and YouTube embedded web items are completely excluded from Android Auto nodes to prevent driving distractions or external-player interruptions.
+
+#### 5. Privacy Shield & Zero-Knowledge Architecture
+- **Personalization Opt-Out:** When "Personalized Recommendations" or "Keep Listening History" is disabled in Settings:
+  - Listening history and liked song IDs are **never** passed to the AI recommendation engine.
+  - Generative queues operate exclusively on zero-history acoustic prompts and general genre models.
+- **Local-Only Processing:** Session logs and recent AI playlist archives are stored in local DataStore/preferences.
+- **AI Cache Clear:** Users can wipe all live session feedback and recent prompt history in one tap via Settings.
+
+#### 6. Multi-Signal Candidate Ranker
+- **Scoring Dimensions:**
+  - `ArtistAffinity` (+30 pts for favorite artists)
+  - `GenreMatch` (+20 pts for matching genre)
+  - `EnergyAlignment` (+25 pts for matching target BPM/energy curve)
+  - `RecencyDiversityPenalty` (-40 pts for tracks played recently in current session)
+  - `FeedbackWeight` (+25 pts for positive live feedback, -50 pts for negative feedback)
+  - `SourceReliability` (+15 pts for local on-device tracks for zero-buffering playback)
+
+#### 7. Entitlement & Monetization Integration
+- **Free User Accessibility:** Free tier users receive 5 daily AI Playlist generations and full access to standard Cyber DJ modes (Drive, Chill, Workout, Focus).
+- **Pro Features:** Unlimited AI playlist synthesis, high-bitrate streaming, exclusive DJ modes (Party, Sleep, Discover, Throwback), and zero CyberPulse advertising.
 

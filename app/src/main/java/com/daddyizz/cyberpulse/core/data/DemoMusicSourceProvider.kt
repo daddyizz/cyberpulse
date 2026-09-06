@@ -6,176 +6,253 @@ import kotlinx.coroutines.delay
 
 class DemoMusicSourceProvider : MusicSourceProvider {
 
-    override val providerName: String = "CyberPulse Local Engine"
+    override val providerName: String = "CyberPulse Curated Engine"
     override val providerSource: MusicSource = MusicSource.DEMO
 
     private val demoTracks = listOf(
         Track(
             id = "trk_01",
-            title = "Night Drive",
-            artist = "NeuroDancer",
-            album = "Neon Drift LP",
+            title = "Blinding Lights",
+            artist = "The Weeknd",
+            album = "After Hours",
+            artworkUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800",
             placeholderArtworkKey = "neon_horizon",
-            durationSeconds = 214,
+            durationSeconds = 200,
             source = MusicSource.DEMO,
             isLiked = true,
-            playsCount = 142800L,
+            playsCount = 3890000L,
             artistId = "art_01",
             albumId = "alb_01",
-            artwork = Artwork(url = null, placeholderKey = "neon_horizon")
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "neon_horizon"
+            ),
+            lyricsPreview = "I've been on my own for long enough, maybe you can show me how to love...",
+            pulseScore = 99,
+            year = 2020
         ),
         Track(
             id = "trk_02",
-            title = "Cyber Mix",
-            artist = "PulseMatrix",
-            album = "Quantum Waves",
+            title = "Nightcall",
+            artist = "Kavinsky",
+            album = "OutRun",
+            artworkUrl = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800",
             placeholderArtworkKey = "purple_pulse",
-            durationSeconds = 188,
+            durationSeconds = 259,
             source = MusicSource.DEMO,
-            isLiked = false,
-            playsCount = 98300L,
-            artistId = "art_05",
+            isLiked = true,
+            playsCount = 1850000L,
+            artistId = "art_02",
             albumId = "alb_02",
-            artwork = Artwork(url = null, placeholderKey = "purple_pulse")
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "purple_pulse"
+            ),
+            lyricsPreview = "I'm giving you a night call to tell you how I feel...",
+            pulseScore = 96,
+            year = 2013
         ),
         Track(
             id = "trk_03",
-            title = "Focus Mode",
-            artist = "VoidEcho",
-            album = "Subliminal Flow",
-            placeholderArtworkKey = "digital_rain",
-            durationSeconds = 302,
+            title = "Harder, Better, Faster, Stronger",
+            artist = "Daft Punk",
+            album = "Discovery",
+            artworkUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800",
+            placeholderArtworkKey = "cyber_grid",
+            durationSeconds = 224,
             source = MusicSource.DEMO,
             isLiked = true,
-            playsCount = 312000L,
-            artistId = "art_06",
+            playsCount = 2420000L,
+            artistId = "art_03",
             albumId = "alb_03",
-            artwork = Artwork(url = null, placeholderKey = "digital_rain")
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "cyber_grid"
+            ),
+            lyricsPreview = "Work it harder, make it better, do it faster, makes us stronger...",
+            pulseScore = 98,
+            year = 2001
         ),
         Track(
             id = "trk_04",
-            title = "Electric Dreams",
-            artist = "Hologram Boy",
-            album = "Silicon Memories",
-            placeholderArtworkKey = "electric_dream",
-            durationSeconds = 227,
+            title = "Midnight City",
+            artist = "M83",
+            album = "Hurry Up, We're Dreaming",
+            artworkUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800",
+            placeholderArtworkKey = "neon_horizon",
+            durationSeconds = 243,
             source = MusicSource.DEMO,
             isLiked = false,
-            playsCount = 65400L,
-            artistId = "art_03",
+            playsCount = 2150000L,
+            artistId = "art_04",
             albumId = "alb_04",
-            artwork = Artwork(url = null, placeholderKey = "electric_dream")
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "neon_horizon"
+            ),
+            lyricsPreview = "Waiting in a car, waiting for a ride in the dark...",
+            pulseScore = 95,
+            year = 2011
         ),
         Track(
             id = "trk_05",
-            title = "Midnight Pulse",
-            artist = "CyberValkyrie",
-            album = "Chrome Angels",
-            placeholderArtworkKey = "midnight_circuit",
-            durationSeconds = 245,
+            title = "Turbo Killer",
+            artist = "Carpenter Brut",
+            album = "Trilogy",
+            artworkUrl = "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800",
+            placeholderArtworkKey = "purple_pulse",
+            durationSeconds = 208,
             source = MusicSource.DEMO,
             isLiked = true,
-            playsCount = 205000L,
-            artistId = "art_04",
+            playsCount = 980000L,
+            artistId = "art_05",
             albumId = "alb_05",
-            artwork = Artwork(url = null, placeholderKey = "midnight_circuit")
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "purple_pulse"
+            ),
+            lyricsPreview = "Revving engines through the synthetic horizon...",
+            pulseScore = 97,
+            year = 2015
         ),
         Track(
             id = "trk_06",
-            title = "Tokyo Overdrive",
-            artist = "Vector 7",
-            album = "Shinjuku Highway",
-            placeholderArtworkKey = "neon_horizon",
-            durationSeconds = 196,
+            title = "Starboy",
+            artist = "The Weeknd ft. Daft Punk",
+            album = "Starboy",
+            artworkUrl = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=800",
+            placeholderArtworkKey = "cyber_grid",
+            durationSeconds = 230,
             source = MusicSource.DEMO,
-            isLiked = false,
-            playsCount = 89000L,
-            artistId = "art_02",
+            isLiked = true,
+            playsCount = 3100000L,
+            artistId = "art_01",
             albumId = "alb_06",
-            artwork = Artwork(url = null, placeholderKey = "neon_horizon")
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "cyber_grid"
+            ),
+            lyricsPreview = "Look what you've done, I'm a motherf***ing starboy...",
+            pulseScore = 97,
+            year = 2016
         ),
         Track(
             id = "trk_07",
-            title = "Synthetic Heart",
-            artist = "NeuroDancer",
-            album = "Neon Drift LP",
-            placeholderArtworkKey = "purple_pulse",
-            durationSeconds = 232,
+            title = "Days of Thunder",
+            artist = "The Midnight",
+            album = "Days of Thunder",
+            artworkUrl = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800",
+            placeholderArtworkKey = "neon_horizon",
+            durationSeconds = 329,
             source = MusicSource.DEMO,
-            isLiked = true,
-            playsCount = 120500L,
-            artistId = "art_01",
-            albumId = "alb_01",
-            artwork = Artwork(url = null, placeholderKey = "purple_pulse")
+            isLiked = false,
+            playsCount = 820000L,
+            artistId = "art_06",
+            albumId = "alb_07",
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "neon_horizon"
+            ),
+            lyricsPreview = "We were running out of time, down the Pacific Coast Highway...",
+            pulseScore = 94,
+            year = 2014
         ),
         Track(
             id = "trk_08",
-            title = "Glitch Odyssey",
-            artist = "PulseMatrix",
-            album = "Quantum Waves",
-            placeholderArtworkKey = "digital_rain",
-            durationSeconds = 264,
+            title = "Tech Noir",
+            artist = "Gunship",
+            album = "Gunship",
+            artworkUrl = "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=800",
+            placeholderArtworkKey = "purple_pulse",
+            durationSeconds = 297,
             source = MusicSource.DEMO,
-            isLiked = false,
-            playsCount = 47800L,
-            artistId = "art_05",
-            albumId = "alb_02",
-            artwork = Artwork(url = null, placeholderKey = "digital_rain")
+            isLiked = true,
+            playsCount = 740000L,
+            artistId = "art_07",
+            albumId = "alb_08",
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "purple_pulse"
+            ),
+            lyricsPreview = "Neon reflections in the rearview mirror...",
+            pulseScore = 93,
+            year = 2015
         ),
         Track(
             id = "trk_09",
-            title = "Carbon Cascade",
-            artist = "Vector 7",
-            album = "Shinjuku Highway",
-            placeholderArtworkKey = "midnight_circuit",
-            durationSeconds = 210,
+            title = "Resonance",
+            artist = "HOME",
+            album = "Odyssey",
+            artworkUrl = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800",
+            placeholderArtworkKey = "cyber_grid",
+            durationSeconds = 212,
             source = MusicSource.DEMO,
             isLiked = false,
-            playsCount = 55400L,
-            artistId = "art_02",
-            albumId = "alb_06",
-            artwork = Artwork(url = null, placeholderKey = "midnight_circuit")
+            playsCount = 1950000L,
+            artistId = "art_08",
+            albumId = "alb_09",
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "cyber_grid"
+            ),
+            lyricsPreview = "Ethereal synth resonance moving across the cosmos...",
+            pulseScore = 92,
+            year = 2014
         ),
         Track(
             id = "trk_10",
-            title = "Sub-bass Horizon",
-            artist = "VoidEcho",
-            album = "Subliminal Flow",
+            title = "Running in the Night",
+            artist = "FM-84",
+            album = "Atlas",
+            artworkUrl = "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&q=80&w=800",
             placeholderArtworkKey = "neon_horizon",
-            durationSeconds = 280,
+            durationSeconds = 270,
             source = MusicSource.DEMO,
-            isLiked = false,
-            playsCount = 78000L,
-            artistId = "art_06",
-            albumId = "alb_03",
-            artwork = Artwork(url = null, placeholderKey = "neon_horizon")
+            isLiked = true,
+            playsCount = 880000L,
+            artistId = "art_09",
+            albumId = "alb_10",
+            artwork = Artwork(
+                url = "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&q=80&w=800",
+                placeholderKey = "neon_horizon"
+            ),
+            lyricsPreview = "Heartbeats racing underneath city lights, running in the night...",
+            pulseScore = 96,
+            year = 2016
         )
     )
 
     private val demoArtists = listOf(
-        Artist("art_01", "NeuroDancer", 845000L, "neon_horizon", null, Artwork(null, placeholderKey = "neon_horizon"), listOf("Electronic", "Synthwave"), "Pioneer of high-tempo neon synth aesthetics and analog arpeggios."),
-        Artist("art_02", "Vector 7", 520000L, "midnight_circuit", null, Artwork(null, placeholderKey = "midnight_circuit"), listOf("Cyberpunk", "Darksynth"), "Heavy distorted basslines tailored for late-night concrete highways."),
-        Artist("art_03", "Hologram Boy", 430000L, "electric_dream", null, Artwork(null, placeholderKey = "electric_dream"), listOf("Lo-Fi", "Indie"), "Warm tape-decay soundscapes fused with retro-futuristic vocals."),
-        Artist("art_04", "CyberValkyrie", 680000L, "purple_pulse", null, Artwork(null, placeholderKey = "purple_pulse"), listOf("Metal", "Electronic"), "Symphonic industrial metal colliding with digital hyper-synthesis."),
-        Artist("art_05", "PulseMatrix", 910000L, "digital_rain", null, Artwork(null, placeholderKey = "digital_rain"), listOf("Techno", "Acid"), "Hypnotic 303 modular patterns designed for endless subterranean rave states."),
-        Artist("art_06", "VoidEcho", 340000L, "neon_horizon", null, Artwork(null, placeholderKey = "neon_horizon"), listOf("Ambient", "Focus"), "Deep atmospheric soundscapes designed for flow state and nocturnal immersion.")
+        Artist("art_01", "The Weeknd", 38900000L, "neon_horizon", "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), listOf("Electronic", "Synthwave", "R&B"), "Ikon global pembawa gelombang synthwave elektronik ke arus perdana dunia."),
+        Artist("art_02", "Kavinsky", 18500000L, "purple_pulse", "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800", placeholderKey = "purple_pulse"), listOf("Synthwave", "French House", "Cyberpunk"), "Peneraju muzik synthwave Perancis dengan trek ikonik Nightcall."),
+        Artist("art_03", "Daft Punk", 29000000L, "cyber_grid", "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800", placeholderKey = "cyber_grid"), listOf("Electronic", "French Touch", "Disco"), "Duo robot elektronik legenda dunia yang merevolusikan muzik tarian moden."),
+        Artist("art_04", "M83", 14500000L, "neon_horizon", "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), listOf("Dream Pop", "Electronic", "Shoegaze"), "Pencipta landskap bunyi sinematik dan melodi nostalgia retro."),
+        Artist("art_05", "Carpenter Brut", 8200000L, "purple_pulse", "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800", placeholderKey = "purple_pulse"), listOf("Darksynth", "Metal", "Cyberpunk"), "Adunan bertenaga tinggi darksynth, metal industri, dan elektro cyber."),
+        Artist("art_06", "The Midnight", 7900000L, "neon_horizon", "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), listOf("Synthwave", "Retrowave", "Saxophone"), "Pencerita muzik 80s nostalgia dengan gabungan saksofon dan vokal emosional."),
+        Artist("art_07", "Gunship", 5400000L, "purple_pulse", "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=800", placeholderKey = "purple_pulse"), listOf("Cyberpunk", "Synthwave", "Rock"), "Kumpulan synthwave sinematik terkemuka dari United Kingdom."),
+        Artist("art_08", "HOME", 6700000L, "cyber_grid", "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800", placeholderKey = "cyber_grid"), listOf("Chillwave", "Lo-Fi", "Ambient"), "Peneraju chillwave moden dengan trek santai dan fokus fikiran."),
+        Artist("art_09", "FM-84", 4800000L, "neon_horizon", "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), listOf("Dreamwave", "Synthwave", "Pop"), "Harmoni musim panas abadi dengan synthesizers analog tulen.")
     )
 
     private val demoAlbums = listOf(
-        Album("alb_01", "Neon Drift LP", "NeuroDancer", "art_01", 2024, "neon_horizon", null, Artwork(null, placeholderKey = "neon_horizon"), 10),
-        Album("alb_02", "Quantum Waves", "PulseMatrix", "art_05", 2023, "purple_pulse", null, Artwork(null, placeholderKey = "purple_pulse"), 8),
-        Album("alb_03", "Subliminal Flow", "VoidEcho", "art_06", 2024, "digital_rain", null, Artwork(null, placeholderKey = "digital_rain"), 6),
-        Album("alb_04", "Silicon Memories", "Hologram Boy", "art_03", 2023, "electric_dream", null, Artwork(null, placeholderKey = "electric_dream"), 11),
-        Album("alb_05", "Chrome Angels", "CyberValkyrie", "art_04", 2024, "midnight_circuit", null, Artwork(null, placeholderKey = "midnight_circuit"), 9),
-        Album("alb_06", "Shinjuku Highway", "Vector 7", "art_02", 2024, "neon_horizon", null, Artwork(null, placeholderKey = "neon_horizon"), 12)
+        Album("alb_01", "After Hours", "The Weeknd", "art_01", 2020, "neon_horizon", "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), 14),
+        Album("alb_02", "OutRun", "Kavinsky", "art_02", 2013, "purple_pulse", "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800", placeholderKey = "purple_pulse"), 13),
+        Album("alb_03", "Discovery", "Daft Punk", "art_03", 2001, "cyber_grid", "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800", placeholderKey = "cyber_grid"), 14),
+        Album("alb_04", "Hurry Up, We're Dreaming", "M83", "art_04", 2011, "neon_horizon", "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), 22),
+        Album("alb_05", "Trilogy", "Carpenter Brut", "art_05", 2015, "purple_pulse", "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800", placeholderKey = "purple_pulse"), 18),
+        Album("alb_06", "Starboy", "The Weeknd", "art_01", 2016, "cyber_grid", "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=800", placeholderKey = "cyber_grid"), 18),
+        Album("alb_07", "Days of Thunder", "The Midnight", "art_06", 2014, "neon_horizon", "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), 6),
+        Album("alb_08", "Gunship", "Gunship", "art_07", 2015, "purple_pulse", "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=800", placeholderKey = "purple_pulse"), 13),
+        Album("alb_09", "Odyssey", "HOME", "art_08", 2014, "cyber_grid", "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800", placeholderKey = "cyber_grid"), 12),
+        Album("alb_10", "Atlas", "FM-84", "art_09", 2016, "neon_horizon", "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), 11)
     )
 
     private val demoPlaylists = listOf(
-        Playlist("pl_01", "Night Drive", "High-speed synthwave & electronic bass", "High-speed synthwave & electronic bass for night cruises across the neo-city grid", "neon_horizon", null, Artwork(null, placeholderKey = "neon_horizon"), 42, "CyberPulse Curators"),
-        Playlist("pl_02", "Cyber Mix", "Curated algorithmic selections", "Algorithmic pulse generator tailored to your frequency", "purple_pulse", null, Artwork(null, placeholderKey = "purple_pulse"), 50, "CyberPulse Core"),
-        Playlist("pl_03", "Focus Mode", "Deep binaural coding ambient", "Deep atmospheric binaural frequencies for coding, deep architecture, and focus", "digital_rain", null, Artwork(null, placeholderKey = "digital_rain"), 36, "VoidEcho Labs"),
-        Playlist("pl_04", "Electric Dreams", "Melancholic retro textures", "Melancholic retro-futuristic audio textures and lo-fi synthetic memories", "electric_dream", null, Artwork(null, placeholderKey = "electric_dream"), 28, "CyberPulse Curators"),
-        Playlist("pl_05", "Midnight Pulse", "Peak-hour cyber dance", "Peak-hour cyber dance and neon club tracks directly from subterranean hubs", "midnight_circuit", null, Artwork(null, placeholderKey = "midnight_circuit"), 60, "PulseMatrix Curations")
+        Playlist("pl_01", "Synthwave Neon Horizon", "Muzik Synthwave & Retro Paling Hangat", "Pilihan synthwave bertenaga tinggi untuk pemanduan malam di bawah cahaya neon bandar raya", "neon_horizon", "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), 42, "CyberPulse Curators"),
+        Playlist("pl_02", "Cyber Mix (Pilihan Utama)", "Lagu-lagu Popular Masa Kini", "Koleksi seleksi algoritma dan trek kegemaran peminat cyberpunk", "purple_pulse", "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800", placeholderKey = "purple_pulse"), 50, "CyberPulse Core"),
+        Playlist("pl_03", "Deep Focus & Binaural", "Gelombang Bunyi Untuk Produktiviti", "Frekvensi binaural santai untuk mod fokus mendalam, pengaturcaraan, dan penyelidikan", "cyber_grid", "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800", placeholderKey = "cyber_grid"), 36, "CyberPulse Labs"),
+        Playlist("pl_04", "French Touch & Electro Legends", "Ikon Muzik Elektronik Eropah", "Irama disko elektronik daripada pelopor French House legenda dunia", "neon_horizon", "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800", placeholderKey = "neon_horizon"), 28, "CyberPulse Curators"),
+        Playlist("pl_05", "Darksynth & High Octane Drive", "Tenaga Maksimum & Bass Padu", "Trek kelajuan tinggi dengan bass berat dan synthesizers gelap untuk pengalaman adrenalin", "purple_pulse", "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800", Artwork("https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800", placeholderKey = "purple_pulse"), 60, "CyberPulse Hardline")
     )
 
     override suspend fun search(
@@ -282,7 +359,7 @@ class DemoMusicSourceProvider : MusicSourceProvider {
             supportsOffline = true,
             supportsLyrics = true,
             streamBitrateKbps = 320,
-            notice = "Local demo metadata ready. Real audio playback activated in Block 3."
+            notice = "Curated high-fidelity audio stream. Background playback active."
         )
     }
 

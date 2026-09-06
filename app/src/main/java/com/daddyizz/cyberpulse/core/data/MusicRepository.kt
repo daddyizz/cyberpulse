@@ -17,8 +17,9 @@ import kotlinx.coroutines.flow.asStateFlow
 class MusicRepository(
     val primaryProvider: MusicSourceProvider = YouTubeMetadataProvider(CyberPulseNetworkClient.youtubeService),
     val fallbackProvider: DemoMusicSourceProvider = DemoMusicSourceProvider(),
+    val spotifyProvider: MusicSourceProvider = com.daddyizz.cyberpulse.core.provider.SpotifyMetadataProvider(CyberPulseNetworkClient.spotifyService),
     val cache: MetadataCache = MetadataCache(),
-    val searchRepository: SearchRepository = SearchRepository(primaryProvider, fallbackProvider, cache),
+    val searchRepository: SearchRepository = SearchRepository(primaryProvider, fallbackProvider, cache, spotifyProvider = spotifyProvider),
     val metadataRepository: MetadataRepository = MetadataRepository(primaryProvider, fallbackProvider, cache),
     context: Context? = null
 ) {

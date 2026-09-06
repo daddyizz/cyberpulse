@@ -11,26 +11,45 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.daddyizz.cyberpulse.CyberPulseApplication
+import com.daddyizz.cyberpulse.core.ads.AdPlacement
+import com.daddyizz.cyberpulse.core.ads.CyberAdBanner
 import com.daddyizz.cyberpulse.core.designsystem.*
 import com.daddyizz.cyberpulse.core.model.UserProfile
+import com.daddyizz.cyberpulse.feature.settings.PrivacyLegalDialog
 
 @Composable
 fun ProfileScreen(
     userProfile: UserProfile = UserProfile(),
     onNavigateToSettings: () -> Unit,
+    onNavigateToPro: () -> Unit = {},
+    onNavigateToStats: () -> Unit = {},
+    onNavigateToReplay: () -> Unit = {},
     onFeatureClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalCyberPulseColors.current
+    val app = remember { CyberPulseApplication.instance }
+    val isPro by app.entitlementRepository.isPro.collectAsState()
+    val authUser = app.authRepository.currentUser
+
+    var showAccountDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
 
     val menuItems = listOf(
         Triple("Account", Icons.Default.ManageAccounts, "Account"),
         Triple("Listening Stats", Icons.Default.BarChart, "Listening Stats"),
+        Triple("CyberPulse Replay", Icons.Default.AutoAwesome, "CyberPulse Replay"),
         Triple("Appearance", Icons.Default.Palette, "Appearance"),
         Triple("Playback", Icons.Default.GraphicEq, "Playback Engine"),
         Triple("Notifications", Icons.Default.Notifications, "Notifications"),
@@ -84,9 +103,9 @@ fun ProfileScreen(
                             color = colors.textPrimary
                         )
                         Text(
-                            text = "${userProfile.handle} • ${userProfile.subscriptionTier} Tier",
+                            text = if (isPro) "${userProfile.handle} • CyberPulse Pro Member" else "${userProfile.handle} • Free Tier",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = colors.primaryAccent
+                            color = if (isPro) colors.successAccent else colors.primaryAccent
                         )
                     }
                 }
@@ -128,10 +147,14 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(CyberRadius.md))
                     .clickable {
-                        if (title == "Settings" || title == "Appearance") {
-                            onNavigateToSettings()
-                        } else {
-                            onFeatureClick(featureName)
+                        when (title) {
+                            "Account" -> showAccountDialog = true
+                            "Privacy" -> showPrivacyDialog = true
+                            "Listening Stats" -> onNavigateToStats()
+                            "CyberPulse Replay" -> onNavigateToReplay()
+                            "Settings", "Appearance" -> onNavigateToSettings()
+                            "CyberPulse Pro" -> onNavigateToPro()
+                            else -> onFeatureClick(featureName)
                         }
                     }
                     .padding(vertical = CyberSpacing.md, horizontal = CyberSpacing.sm),
@@ -140,7 +163,7 @@ fun ProfileScreen(
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
-                    tint = colors.primaryAccent,
+                    tint = if (title == "CyberPulse Pro") colors.secondaryAccent else colors.primaryAccent,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(CyberSpacing.md))
@@ -150,6 +173,14 @@ fun ProfileScreen(
                     color = colors.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
+                if (title == "CyberPulse Pro" && isPro) {
+                    Text(
+                        text = "ACTIVE",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.successAccent,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                }
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = null,
@@ -157,6 +188,20 @@ fun ProfileScreen(
                 )
             }
         }
+
+        // Block 7: Visual banner ad placement near lower content for Free tier
+        item {
+            Spacer(modifier = Modifier.height(CyberSpacing.lg))
+            CyberAdBanner(placement = AdPlacement.PROFILE)
+        }
+    }
+
+    if (showAccountDialog) {
+        AccountDialog(onDismiss = { showAccountDialog = false })
+    }
+
+    if (showPrivacyDialog) {
+        PrivacyLegalDialog(onDismiss = { showPrivacyDialog = false })
     }
 }
 

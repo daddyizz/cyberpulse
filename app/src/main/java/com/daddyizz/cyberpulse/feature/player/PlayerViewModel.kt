@@ -2,18 +2,30 @@ package com.daddyizz.cyberpulse.feature.player
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.daddyizz.cyberpulse.CyberPulseApplication
 import com.daddyizz.cyberpulse.core.data.MusicRepository
+import com.daddyizz.cyberpulse.core.lyrics.LyricsRepository
+import com.daddyizz.cyberpulse.core.lyrics.LyricsResult
 import com.daddyizz.cyberpulse.core.model.Track
 import com.daddyizz.cyberpulse.core.player.ConnectionState
 import com.daddyizz.cyberpulse.core.player.PlaybackCapability
 import com.daddyizz.cyberpulse.core.player.PlaybackConnection
 import com.daddyizz.cyberpulse.core.player.PlaybackError
 import com.daddyizz.cyberpulse.core.player.PlaybackSourceResolver
+import com.daddyizz.cyberpulse.core.visualizer.VisualizerController
+import com.daddyizz.cyberpulse.core.visualizer.VisualizerMode
+import com.daddyizz.cyberpulse.core.visualizer.VisualizerState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+enum class NowPlayingMode {
+    ARTWORK,
+    VISUALIZER,
+    LYRICS
+}
 
 data class PlayerUiState(
     val currentTrack: Track? = null,
@@ -34,12 +46,18 @@ data class PlayerUiState(
     val snackbarMessage: String? = null,
     val isLyricsExpanded: Boolean = false,
     val isQueueExpanded: Boolean = false,
-    val selectedTrackForMenu: Track? = null
+    val selectedTrackForMenu: Track? = null,
+    val activePlayerMode: NowPlayingMode = NowPlayingMode.ARTWORK,
+    val lyricsResult: LyricsResult? = null,
+    val visualizerState: VisualizerState = VisualizerState(),
+    val isVisualizerFullScreen: Boolean = false
 )
 
 class PlayerViewModel(
     private val musicRepository: MusicRepository,
-    private val playbackConnection: PlaybackConnection
+    private val playbackConnection: PlaybackConnection,
+    private val lyricsRepository: LyricsRepository = try { CyberPulseApplication.instance.lyricsRepository } catch (_: Exception) { LyricsRepository(com.daddyizz.cyberpulse.core.lyrics.LocalLrcLyricsProvider()) },
+    private val visualizerController: VisualizerController? = try { CyberPulseApplication.instance.visualizerController } catch (_: Exception) { null }
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -74,6 +92,21 @@ class PlayerViewModel(
                     // Reset if a new track starts
                 }
 
+                // Block 9A: Lyrics & Visualizer track synchronization
+                if (pbState.currentTrack?.id != _uiState.value.currentTrack?.id) {
+                    val newTrack = pbState.currentTrack
+                    visualizerController?.onPlaybackTrackChanged(newTrack, pbState.audioSessionId)
+                    if (newTrack != null) {
+                        loadLyrics(newTrack)
+                    } else {
+                        _uiState.update { it.copy(lyricsResult = null) }
+                    }
+                }
+
+                if (pbState.isPlaying != _uiState.value.isPlaying) {
+                    visualizerController?.onIsPlayingChanged(pbState.isPlaying)
+                }
+
                 _uiState.update { current ->
                     current.copy(
                         currentTrack = pbState.currentTrack,
@@ -91,6 +124,15 @@ class PlayerViewModel(
                         playbackError = pbState.error,
                         connectionState = pbState.connectionState
                     )
+                }
+            }
+        }
+
+        // Collect visualizer state from controller
+        if (visualizerController != null) {
+            viewModelScope.launch {
+                visualizerController.state.collect { vState ->
+                    _uiState.update { it.copy(visualizerState = vState) }
                 }
             }
         }
@@ -268,5 +310,29 @@ class PlayerViewModel(
 
     fun dismissError() {
         _uiState.update { it.copy(playbackError = null) }
+    }
+
+    fun loadLyrics(track: Track) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(lyricsResult = null) }
+            val result = lyricsRepository.getLyrics(track)
+            _uiState.update { it.copy(lyricsResult = result) }
+        }
+    }
+
+    fun setPlayerMode(mode: NowPlayingMode) {
+        _uiState.update { it.copy(activePlayerMode = mode) }
+    }
+
+    fun selectVisualizerMode(mode: VisualizerMode) {
+        visualizerController?.selectMode(mode)
+    }
+
+    fun toggleVisualizerFullScreen() {
+        _uiState.update { it.copy(isVisualizerFullScreen = !it.isVisualizerFullScreen) }
+    }
+
+    fun seekToLyricMs(timestampMs: Long) {
+        seekTo(timestampMs / 1000L)
     }
 }

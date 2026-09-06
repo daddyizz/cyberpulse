@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.daddyizz.cyberpulse.core.ads.AdPlacement
+import com.daddyizz.cyberpulse.core.ads.CyberAdBanner
 import com.daddyizz.cyberpulse.core.designsystem.*
 import com.daddyizz.cyberpulse.core.model.Artist
 import com.daddyizz.cyberpulse.core.model.Playlist
@@ -30,6 +32,9 @@ fun HomeScreen(
     onArtistSelect: (Artist) -> Unit,
     onProfileClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onStatsClick: () -> Unit = {},
+    onCyberDjClick: () -> Unit = {},
+    onAiPlaylistClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -62,6 +67,13 @@ fun HomeScreen(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onStatsClick) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.BarChart,
+                            contentDescription = "Listening Stats",
+                            tint = colors.primaryAccent
+                        )
+                    }
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -87,6 +99,103 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+
+        // Block 8: Cyber DJ & AI Discovery Action Cards
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = CyberSpacing.screenHorizontal),
+                horizontalArrangement = Arrangement.spacedBy(CyberSpacing.md)
+            ) {
+                // Cyber DJ Card
+                Surface(
+                    color = colors.surfaceElevated,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, colors.primaryAccent.copy(alpha = 0.5f)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onCyberDjClick)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                .background(colors.primaryAccent.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.GraphicEq,
+                                contentDescription = null,
+                                tint = colors.primaryAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Cyber DJ",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = "Endless mix",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+                }
+
+                // AI Playlist Card
+                Surface(
+                    color = colors.surfaceElevated,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, colors.secondaryAccent.copy(alpha = 0.5f)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onAiPlaylistClick)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                .background(colors.secondaryAccent.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = colors.secondaryAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "AI Playlist",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = "Generate vibe",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(CyberSpacing.sectionSpacing))
         }
 
         // Section 1: Recently Played
@@ -127,6 +236,14 @@ fun HomeScreen(
                 items(uiState.trendingNow) { track ->
                     CyberMusicCard(track = track, onTrackClick = onTrackSelect)
                 }
+            }
+            Spacer(modifier = Modifier.height(CyberSpacing.sectionSpacing))
+        }
+
+        // Block 7: Adaptive Banner Ad between primary feeds (Free tier only)
+        item {
+            Box(modifier = Modifier.padding(horizontal = CyberSpacing.screenHorizontal)) {
+                CyberAdBanner(placement = AdPlacement.HOME_FEED)
             }
             Spacer(modifier = Modifier.height(CyberSpacing.sectionSpacing))
         }

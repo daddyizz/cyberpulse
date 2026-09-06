@@ -50,4 +50,34 @@ class SettingsViewModel(
             preferencesRepository.setRecommendationsEnabled(enabled)
         }
     }
+
+    fun togglePersonalizedAi(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setPersonalizedAiEnabled(enabled)
+        }
+    }
+
+    fun toggleKeepListeningHistory(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setKeepListeningHistory(enabled)
+        }
+    }
+
+    fun toggleAllowExplicit(allow: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setAllowExplicitContent(allow)
+        }
+    }
+
+    fun setPreferredLanguages(languages: Set<String>) {
+        viewModelScope.launch {
+            preferencesRepository.setPreferredLanguages(languages)
+        }
+    }
+
+    fun resetAiEngine() {
+        try {
+            com.daddyizz.cyberpulse.CyberPulseApplication.instance.aiPlaylistRepository.clearHistory()
+        } catch (_: Exception) {}
+    }
 }

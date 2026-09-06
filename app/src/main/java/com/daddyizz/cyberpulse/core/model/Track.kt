@@ -28,7 +28,9 @@ data class Track(
     val isLiveStream: Boolean = false,
     val isAvailable: Boolean = true,
     val dateAdded: Long = 0L,
-    val folderName: String? = null
+    val folderName: String? = null,
+    val spotifyUri: String? = null,
+    val externalUrl: String? = null
 ) {
     val formattedDuration: String
         get() {

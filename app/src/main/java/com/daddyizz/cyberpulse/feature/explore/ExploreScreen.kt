@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.daddyizz.cyberpulse.core.ads.AdPlacement
+import com.daddyizz.cyberpulse.core.ads.CyberAdBanner
 import com.daddyizz.cyberpulse.core.designsystem.*
 
 data class ExploreCategory(
@@ -220,6 +222,12 @@ fun ExploreScreen(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(CyberSpacing.sectionSpacing))
+        }
+
+        // Block 7: Adaptive Banner Ad between discovery sections (Free tier only)
+        item {
+            CyberAdBanner(placement = AdPlacement.EXPLORE_FEED)
             Spacer(modifier = Modifier.height(CyberSpacing.sectionSpacing))
         }
 

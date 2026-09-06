@@ -11,5 +11,6 @@ enum class SearchFilter(val displayName: String) {
     ARTISTS("Artists"),
     ALBUMS("Albums"),
     PLAYLISTS("Playlists"),
-    VIDEOS("Videos")
+    VIDEOS("Videos"),
+    SPOTIFY("Spotify")
 }

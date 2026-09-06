@@ -103,6 +103,7 @@ class CyberPulsePlaybackService : MediaLibraryService() {
             .build()
         exoPlayer.addListener(playerListener)
         player = exoPlayer
+        activeAudioSessionId = exoPlayer.audioSessionId
 
         // 5. Configure pending intent for notification tap back into MainActivity
         val sessionActivityPendingIntent = PendingIntent.getActivity(
@@ -354,5 +355,7 @@ class CyberPulsePlaybackService : MediaLibraryService() {
     companion object {
         const val NOTIFICATION_CHANNEL_ID = "cyberpulse_media_playback"
         const val NOTIFICATION_ID = 1001
+        var activeAudioSessionId: Int = 0
+            internal set
     }
 }

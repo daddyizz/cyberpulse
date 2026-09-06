@@ -34,12 +34,14 @@ class OnboardingViewModel(
     )
 
     val availableArtists = listOf(
-        Artist("art_01", "NeuroDancer", 845000L, "neon_horizon", listOf("Electronic", "Synthwave")),
-        Artist("art_02", "Vector 7", 520000L, "midnight_circuit", listOf("Cyberpunk", "Darksynth")),
-        Artist("art_03", "Hologram Boy", 430000L, "electric_dream", listOf("Lo-Fi", "Indie")),
-        Artist("art_04", "CyberValkyrie", 680000L, "purple_pulse", listOf("Metal", "Electronic")),
-        Artist("art_05", "PulseMatrix", 910000L, "digital_rain", listOf("Techno", "Acid")),
-        Artist("art_06", "VoidEcho", 340000L, "neon_horizon", listOf("Ambient", "Focus"))
+        Artist("art_01", "The Weeknd", 38900000L, avatarPlaceholderKey = "neon_horizon", artworkUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800", genres = listOf("Electronic", "Synthwave", "R&B")),
+        Artist("art_02", "Kavinsky", 18500000L, avatarPlaceholderKey = "purple_pulse", artworkUrl = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=800", genres = listOf("Synthwave", "French House", "Cyberpunk")),
+        Artist("art_03", "Daft Punk", 29000000L, avatarPlaceholderKey = "cyber_grid", artworkUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800", genres = listOf("Electronic", "French Touch", "Disco")),
+        Artist("art_04", "M83", 14500000L, avatarPlaceholderKey = "neon_horizon", artworkUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800", genres = listOf("Dream Pop", "Electronic", "Ambient")),
+        Artist("art_05", "Carpenter Brut", 8200000L, avatarPlaceholderKey = "purple_pulse", artworkUrl = "https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?auto=format&fit=crop&q=80&w=800", genres = listOf("Darksynth", "Metal", "Cyberpunk")),
+        Artist("art_06", "The Midnight", 7900000L, avatarPlaceholderKey = "neon_horizon", artworkUrl = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800", genres = listOf("Synthwave", "Retrowave", "Saxophone")),
+        Artist("art_07", "Gunship", 5400000L, avatarPlaceholderKey = "purple_pulse", artworkUrl = "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=800", genres = listOf("Cyberpunk", "Synthwave", "Rock")),
+        Artist("art_08", "HOME", 6700000L, avatarPlaceholderKey = "cyber_grid", artworkUrl = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=800", genres = listOf("Chillwave", "Lo-Fi", "Ambient"))
     )
 
     fun nextStep() {
