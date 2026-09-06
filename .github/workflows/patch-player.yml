@@ -1,0 +1,245 @@
+name: Patch player reliability
+
+on:
+  push:
+    branches: [player-fixes]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-check:
+    if: ${{ !contains(github.event.head_commit.message, '[player-patch-done]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: player-fixes
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Patch CyberPulse player
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('src/components/CyberPulseApp.tsx')
+          s = p.read_text()
+
+          def sub_once(pattern, replacement, label, flags=0):
+              global s
+              s2, count = re.subn(pattern, replacement, s, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, got {count}')
+              s = s2
+
+          s = s.replace(
+              "import { searchYouTubeVideos } from '../services/youtubeService';",
+              "import { searchYouTubeVideos, validateYouTubeVideoId } from '../services/youtubeService';"
+          )
+
+          sub_once(
+              r"  // Derive matched YouTube video ID for full-length, high-definition streaming\n  const effectiveYtId =\n    currentTrack\.youtubeVideoId \|\|\n    DEMO_TRACKS\.find\(\n      \(t\) =>\n        t\.id === currentTrack\.id \|\|\n        t\.title\.toLowerCase\(\) === currentTrack\.title\.toLowerCase\(\) \|\|\n        \(currentTrack\.spotifyTrackId && t\.spotifyTrackId === currentTrack\.spotifyTrackId\)\n    \)\?\.youtubeVideoId \|\|\n    '4NRXx6U8ABQ';\n\n  // Unified audio/video stream is active so audio is never stopped or restarted when toggling modes\n  const isYouTubeActive = true;",
+              "  // Use only a real resolved YouTube id. Never substitute another song as a fallback.\n  const effectiveYtId =\n    currentTrack.youtubeVideoId ||\n    DEMO_TRACKS.find(\n      (t) =>\n        t.id === currentTrack.id ||\n        t.title.toLowerCase() === currentTrack.title.toLowerCase() ||\n        (currentTrack.spotifyTrackId && t.spotifyTrackId === currentTrack.spotifyTrackId)\n    )?.youtubeVideoId;\n\n  const isYouTubeActive = Boolean(effectiveYtId);",
+              'effective youtube id'
+          )
+
+          sub_once(
+              r"  // Timer interval seekbar jika YouTube aktif\n  useEffect\(\(\) => \{.*?\n  \}, \[isPlaying, isYouTubeActive, currentTrack\.durationSeconds\]\);",
+              "  // The seekbar must reflect real player time only. Never simulate elapsed playback.\n  useEffect(() => {\n    if (isPlaying && isYouTubeActive) sendYTCommand('getCurrentTime');\n  }, [isPlaying, isYouTubeActive, currentTrack.id]);",
+              'fake seek timer',
+              re.S
+          )
+
+          s = s.replace(
+              "          url = match?.audioUrl || DEMO_TRACKS[0].audioUrl;",
+              "          url = match?.audioUrl;"
+          )
+          s = s.replace(
+              "          .catch(() => {});",
+              "          .catch(() => setIsPlaying(false));"
+          )
+
+          sub_once(
+              r"  const handlePlayViaYouTube = async \(track: Track\) => \{.*?\n  \};\n\n  const handleSelectTrack = async \(track: Track\) => \{.*?\n  \};\n",
+              r'''  const removeUnavailableTrack = (track: Track) => {
+    setTracks((prev) => prev.filter((item) => item.id !== track.id));
+    setYoutubeResults((prev) => prev.filter((item) => item.id !== track.id));
+    setSpotifyResults((prev) => prev.filter((item) => item.id !== track.id));
+  };
+
+  const resolvePlayableYouTubeId = async (track: Track): Promise<string | undefined> => {
+    const directId = track.youtubeVideoId;
+    if (directId && (await validateYouTubeVideoId(directId))) return directId;
+
+    const demoMatch = DEMO_TRACKS.find(
+      (t) =>
+        t.id === track.id ||
+        t.title.toLowerCase() === track.title.toLowerCase() ||
+        (track.spotifyTrackId && t.spotifyTrackId === track.spotifyTrackId)
+    );
+    if (demoMatch?.youtubeVideoId && demoMatch.youtubeVideoId !== directId) {
+      if (await validateYouTubeVideoId(demoMatch.youtubeVideoId)) return demoMatch.youtubeVideoId;
+    }
+
+    try {
+      const result = await searchYouTubeVideos(`${track.title} ${track.artist}`, 3);
+      return result.tracks.find((item) => item.youtubeVideoId)?.youtubeVideoId;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const handlePlayViaYouTube = async (track: Track) => {
+    cyberAudio.pause();
+    setIsPlaying(false);
+
+    const youtubeVideoId = await resolvePlayableYouTubeId(track);
+    if (!youtubeVideoId) {
+      removeUnavailableTrack(track);
+      setComingSoonTitle('Playback unavailable');
+      return;
+    }
+
+    const resolvedTrack: Track = { ...track, youtubeVideoId, source: 'YOUTUBE' };
+    setCurrentTrack(resolvedTrack);
+    setSeekSeconds(0);
+    setPlaybackMediaMode('video');
+    setIsNowPlayingOpen(true);
+    setIsPlaying(true);
+  };
+
+  const handleSelectTrack = async (track: Track) => {
+    cyberAudio.pause();
+    setIsPlaying(false);
+    setSeekSeconds(0);
+
+    const exactDemo = DEMO_TRACKS.find(
+      (t) => t.id === track.id || t.title.toLowerCase() === track.title.toLowerCase()
+    );
+    const resolvedAudioUrl = track.audioUrl || exactDemo?.audioUrl;
+    const youtubeVideoId = await resolvePlayableYouTubeId(track);
+
+    if (!resolvedAudioUrl && !youtubeVideoId) {
+      removeUnavailableTrack(track);
+      setComingSoonTitle('Playback unavailable');
+      return;
+    }
+
+    const playableTrack: Track = {
+      ...track,
+      audioUrl: resolvedAudioUrl,
+      youtubeVideoId,
+      source: youtubeVideoId ? 'YOUTUBE' : track.source,
+    };
+
+    setCurrentTrack(playableTrack);
+    setActiveSpotifyPlayerTrack(null);
+    setActiveYouTubePlayerTrack(null);
+    setPlaybackMediaMode(youtubeVideoId ? 'video' : 'audio');
+    setIsPlaying(true);
+  };
+''',
+              'track selection handlers',
+              re.S
+          )
+
+          sub_once(
+              r"  const handleNextTrack = \(\) => \{.*?\n  \};\n\n  const handlePrevTrack = \(\) => \{.*?\n  \};",
+              r'''  const handleNextTrack = () => {
+    const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
+    const nextIndex = currentIndex < tracks.length - 1 ? currentIndex + 1 : 0;
+    const nextTrack = tracks[nextIndex];
+    if (nextTrack) void handleSelectTrack(nextTrack);
+  };
+
+  const handlePrevTrack = () => {
+    const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : tracks.length - 1;
+    const prevTrack = tracks[prevIndex];
+    if (prevTrack) void handleSelectTrack(prevTrack);
+  };''',
+              'next previous handlers',
+              re.S
+          )
+
+          # Always keep one YouTube iframe mounted while the full player is closed, so tapping a song
+          # from Home/Search can start actual playback immediately instead of just moving the slider.
+          root_anchor = "    <div className={`relative w-full h-full flex flex-col ${bgColor} text-[#F7F8FC] select-none overflow-hidden font-sans`}>\n"
+          hidden_player = '''    <div className={`relative w-full h-full flex flex-col ${bgColor} text-[#F7F8FC] select-none overflow-hidden font-sans`}>
+      {!isNowPlayingOpen && effectiveYtId && (
+        <iframe
+          ref={ytIframeRef}
+          src={`https://www.youtube-nocookie.com/embed/${effectiveYtId}?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&playsinline=1&autoplay=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}`}
+          title={`${currentTrack.title} background player`}
+          className="absolute -top-[9999px] left-0 w-1 h-1 opacity-0 pointer-events-none"
+          allow="autoplay; encrypted-media"
+          onLoad={() => {
+            if (isPlaying) sendYTCommand('playVideo');
+          }}
+        />
+      )}
+'''
+          if root_anchor not in s:
+              raise SystemExit('root player anchor not found')
+          s = s.replace(root_anchor, hidden_player, 1)
+
+          # Do not create an embed/undefined iframe when a track only has audio.
+          visible_iframe = re.compile(r'''              <iframe\n                ref=\{ytIframeRef\}\n                src=\{`https://www\.youtube-nocookie\.com/embed/\$\{effectiveYtId\}\?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&autoplay=1&origin=\$\{encodeURIComponent\(\n                  typeof window !== 'undefined' \? window\.location\.origin : ''\n                \)\}`\}\n                title=\{currentTrack\.title\}\n                className="w-full h-full border-0 pointer-events-none"\n                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"\n                allowFullScreen\n              />''')
+          replacement = '''              {effectiveYtId ? (
+                <iframe
+                  ref={ytIframeRef}
+                  src={`https://www.youtube-nocookie.com/embed/${effectiveYtId}?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&autoplay=1&origin=${encodeURIComponent(
+                    typeof window !== 'undefined' ? window.location.origin : ''
+                  )}`}
+                  title={currentTrack.title}
+                  className="w-full h-full border-0 pointer-events-none"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  onLoad={() => {
+                    if (isPlaying) sendYTCommand('playVideo');
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs text-[#9CA3B7]">No playable video</div>
+              )}'''
+          s2, count = visible_iframe.subn(replacement, s, count=1)
+          if count != 1:
+              raise SystemExit(f'visible iframe: expected one match, got {count}')
+          s = s2
+
+          # Music Video toggle is allowed only when a real video exists.
+          s = s.replace(
+              "onClick={() => setPlaybackMediaMode('video')}",
+              "onClick={() => effectiveYtId ? setPlaybackMediaMode('video') : setComingSoonTitle('Music video unavailable')}",
+              1
+          )
+
+          p.write_text(s)
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit patched player
+        run: |
+          if git diff --quiet; then
+            echo "No patch changes"
+            exit 0
+          fi
+          git config user.name "cyberpulse-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/components/CyberPulseApp.tsx
+          git commit -m "fix: reliable playback and reject unavailable media [player-patch-done]"
+          git push origin player-fixes
