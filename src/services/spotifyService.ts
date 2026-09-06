@@ -6,6 +6,28 @@ export const SPOTIFY_CONFIG = {
   usesBackendProxy: true
 };
 
+let cachedAccessToken: string | null = null;
+let tokenExpiresAt = 0;
+
+/**
+ * Compatibility helper for artwork resolution. The client never sees the Spotify
+ * client secret: it only requests a short-lived catalog token from our backend proxy.
+ */
+export async function getSpotifyAccessToken(): Promise<string> {
+  const now = Date.now();
+  if (cachedAccessToken && now < tokenExpiresAt - 60_000) return cachedAccessToken;
+
+  const response = await fetch(`${SPOTIFY_CONFIG.proxyPath}/token`);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data?.accessToken) {
+    throw new Error(data?.message || `Spotify token proxy failed (HTTP ${response.status})`);
+  }
+
+  cachedAccessToken = data.accessToken;
+  tokenExpiresAt = now + (Number(data.expiresIn) || 3600) * 1000;
+  return cachedAccessToken;
+}
+
 export interface SpotifySearchResult {
   tracks: Track[];
   error?: string;
