@@ -1,4 +1,4 @@
-import { getSpotifyAccessToken } from './spotifyService';
+import { searchSpotifyArtwork } from './spotifyService';
 
 // Known pre-mapped Spotify cover skin cache for instantaneous rendering
 const PRESET_SPOTIFY_COVERS: Record<string, string> = {
@@ -73,7 +73,6 @@ const PRESET_SPOTIFY_COVERS: Record<string, string> = {
 
 const memoryCache = new Map<string, string>();
 
-// Initialize memory cache with presets
 Object.entries(PRESET_SPOTIFY_COVERS).forEach(([key, url]) => {
   memoryCache.set(key, url);
 });
@@ -84,17 +83,11 @@ function normalizeKey(title?: string, artist?: string): string {
   return `${t}::${a}`;
 }
 
-/**
- * Check if a given URL is a real Spotify image CDN URL
- */
 export function isSpotifyImageUrl(url?: string): boolean {
   if (!url) return false;
   return url.includes('i.scdn.co') || url.includes('spotifycdn.com') || url.includes('mosaic.scdn.co');
 }
 
-/**
- * Synchronously look up if a Spotify cover art is already available in presets or cache
- */
 export function getKnownSpotifyCover(title?: string, artist?: string): string | null {
   if (!title && !artist) return null;
   const fullKey = normalizeKey(title, artist);
@@ -106,7 +99,6 @@ export function getKnownSpotifyCover(title?: string, artist?: string): string | 
   const aKey = (artist || '').toLowerCase().trim();
   if (memoryCache.has(aKey)) return memoryCache.get(aKey)!;
 
-  // Try local storage if in browser
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem(`sp_cover_${fullKey}`) || localStorage.getItem(`sp_cover_${tKey}`);
@@ -115,16 +107,13 @@ export function getKnownSpotifyCover(title?: string, artist?: string): string | 
         return stored;
       }
     } catch {
-      // ignore
+      // ignore storage failures
     }
   }
 
   return null;
 }
 
-/**
- * Resolve Spotify cover art asynchronously by querying the official Spotify API
- */
 export async function resolveSpotifyCoverArt(title: string, artist?: string): Promise<string | null> {
   const existing = getKnownSpotifyCover(title, artist);
   if (existing) return existing;
@@ -133,36 +122,26 @@ export async function resolveSpotifyCoverArt(title: string, artist?: string): Pr
   if (!query) return null;
 
   try {
-    const token = await getSpotifyAccessToken();
-    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,album,artist&limit=1`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!res.ok) return null;
+    const chosen = await searchSpotifyArtwork(title, artist);
+    if (!chosen) return null;
 
-    const data = await res.json();
-    const trackImg = data.tracks?.items?.[0]?.album?.images?.[0]?.url;
-    const albumImg = data.albums?.items?.[0]?.images?.[0]?.url;
-    const artistImg = data.artists?.items?.[0]?.images?.[0]?.url;
+    const fullKey = normalizeKey(title, artist);
+    const tKey = title.toLowerCase().trim();
+    memoryCache.set(fullKey, chosen);
+    memoryCache.set(tKey, chosen);
 
-    const chosen = trackImg || albumImg || artistImg || null;
-    if (chosen) {
-      const fullKey = normalizeKey(title, artist);
-      const tKey = title.toLowerCase().trim();
-      memoryCache.set(fullKey, chosen);
-      memoryCache.set(tKey, chosen);
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(`sp_cover_${fullKey}`, chosen);
-          localStorage.setItem(`sp_cover_${tKey}`, chosen);
-        } catch {
-          // ignore
-        }
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`sp_cover_${fullKey}`, chosen);
+        localStorage.setItem(`sp_cover_${tKey}`, chosen);
+      } catch {
+        // ignore storage failures
       }
-      return chosen;
     }
+
+    return chosen;
   } catch (err) {
     console.warn('Could not resolve Spotify cover for:', query, err);
+    return null;
   }
-
-  return null;
 }
