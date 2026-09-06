@@ -9,10 +9,6 @@ export const SPOTIFY_CONFIG = {
 let cachedAccessToken: string | null = null;
 let tokenExpiresAt = 0;
 
-/**
- * Compatibility helper for artwork resolution. The client never sees the Spotify
- * client secret: it only requests a short-lived catalog token from our backend proxy.
- */
 export async function getSpotifyAccessToken(): Promise<string> {
   const now = Date.now();
   if (cachedAccessToken && now < tokenExpiresAt - 60_000) return cachedAccessToken;
@@ -35,7 +31,6 @@ export interface SpotifySearchResult {
   source?: 'proxy';
 }
 
-/** Pick the highest-resolution album image returned by Spotify. */
 function pickBestArtwork(images?: Array<{ url?: string; width?: number | null; height?: number | null }>): string | undefined {
   if (!images?.length) return undefined;
 
@@ -55,7 +50,7 @@ function mapSpotifyItemToTrack(item: any): Track {
   const album = item.album?.name || 'Spotify Single';
   const artworkUrl = pickBestArtwork(item.album?.images);
   const durationSeconds = Math.round((item.duration_ms || 0) / 1000);
-  const audioUrl = item.preview_url || undefined;
+  const spotifyPreviewUrl = item.preview_url || undefined;
   const spotifyUri = item.uri || `spotify:track:${spotifyId}`;
   const externalUrl = item.external_urls?.spotify || `https://open.spotify.com/track/${spotifyId}`;
 
@@ -67,7 +62,10 @@ function mapSpotifyItemToTrack(item: any): Track {
     artworkUrl,
     placeholderArtworkKey: 'neon_grid',
     durationSeconds,
-    audioUrl,
+    // Spotify Web API preview clips are not full songs, so they must never be
+    // treated as the app's primary full-length audio source.
+    audioUrl: undefined,
+    spotifyPreviewUrl,
     spotifyTrackId: spotifyId,
     spotifyUri,
     externalUrl,
@@ -79,15 +77,13 @@ function mapSpotifyItemToTrack(item: any): Track {
       supportsOffline: false,
       supportsLyrics: true,
       streamBitrateKbps: 320,
-      notice: 'Official Spotify Web Player with interactive embedded playback.'
+      notice: spotifyPreviewUrl
+        ? 'Spotify metadata/artwork available. Preview clip is not full-length; CyberPulse resolves the matching full song through YouTube.'
+        : 'Spotify metadata/artwork available. Full-song playback falls back to a verified matching YouTube source.'
     }
   };
 }
 
-/**
- * Search Spotify through the same-origin backend proxy.
- * Spotify client secrets must never be exposed in browser code.
- */
 export async function searchSpotifyTracks(
   query: string,
   limit = 10
@@ -126,7 +122,6 @@ export async function searchSpotifyTracks(
   }
 }
 
-/** Health check for the server-side Spotify integration. */
 export async function checkSpotifyHealth(): Promise<{
   ok: boolean;
   message: string;
@@ -150,9 +145,6 @@ export async function checkSpotifyHealth(): Promise<{
   }
 }
 
-/**
- * Resolve an official high-resolution Spotify artwork URL via the backend proxy.
- */
 export async function searchSpotifyArtwork(title: string, artist?: string): Promise<string | null> {
   const query = `${title} ${artist || ''}`.trim();
   if (!query) return null;
@@ -169,7 +161,6 @@ export async function searchSpotifyArtwork(title: string, artist?: string): Prom
   }
 }
 
-/** Returns the official Spotify interactive embed URL for playing in an iframe. */
 export function getSpotifyEmbedUrl(spotifyTrackId: string): string {
   const cleanId = spotifyTrackId.replace(/^sp_/, '').replace(/^spotify:track:/, '');
   return `https://open.spotify.com/embed/track/${cleanId}?utm_source=generator&theme=0`;
