@@ -18,7 +18,10 @@ export interface Track {
   placeholderArtworkKey: string;
   artworkUrl?: string;
   durationSeconds: number;
+  /** Full-length directly playable audio only. Never store Spotify preview clips here. */
   audioUrl?: string;
+  /** Spotify may expose a short preview clip; it is metadata only and is not treated as full playback. */
+  spotifyPreviewUrl?: string;
   youtubeVideoId?: string;
   spotifyTrackId?: string;
   spotifyUri?: string;
