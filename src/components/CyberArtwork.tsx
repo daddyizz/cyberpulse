@@ -32,8 +32,8 @@ export const CyberArtwork: React.FC<CyberArtworkProps> = ({
   artist,
   className = 'w-full h-full',
 }) => {
-  const chooseInitial = () =>
-    artworkUrl || getKnownSpotifyCover(title, artist) || fallbackUrl || fallbackFor(keyName);
+  const initialSpotify = getKnownSpotifyCover(title, artist);
+  const chooseInitial = () => initialSpotify || artworkUrl || fallbackUrl || fallbackFor(keyName);
 
   const [currentSrc, setCurrentSrc] = useState<string>(chooseInitial);
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
@@ -42,12 +42,13 @@ export const CyberArtwork: React.FC<CyberArtworkProps> = ({
     let mounted = true;
     setFailedUrls(new Set());
 
-    const initial = artworkUrl || getKnownSpotifyCover(title, artist) || fallbackUrl || fallbackFor(keyName);
+    const knownSpotify = getKnownSpotifyCover(title, artist);
+    const initial = knownSpotify || artworkUrl || fallbackUrl || fallbackFor(keyName);
     setCurrentSrc(initial);
 
-    // Never replace a working cover just because an async lookup finishes later.
-    // Spotify lookup is only used when the track genuinely has no artwork.
-    if (!artworkUrl && title) {
+    // Spotify is the authoritative artwork source. Keep the current image visible
+    // while the lookup runs, then replace it only when Spotify returns a real match.
+    if (title) {
       resolveSpotifyCoverArt(title, artist).then((resolved) => {
         if (mounted && resolved) setCurrentSrc(resolved);
       });
@@ -64,8 +65,8 @@ export const CyberArtwork: React.FC<CyberArtworkProps> = ({
       if (currentSrc) next.add(currentSrc);
 
       const candidates = [
-        artworkUrl,
         getKnownSpotifyCover(title, artist),
+        artworkUrl,
         fallbackUrl,
         fallbackFor(keyName),
       ].filter((value): value is string => Boolean(value));
