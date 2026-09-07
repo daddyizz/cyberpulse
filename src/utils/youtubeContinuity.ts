@@ -10,33 +10,34 @@ let duration = 0;
 let playbackState: 'playing' | 'paused' = 'paused';
 let mirrorGuard = false;
 let lastRenderedTrackKey = '';
+let lastSyncedFrame: HTMLIFrameElement | null = null;
+let lastSyncedSrc = '';
 
 const extractVideoId = (src?: string | null): string => {
   if (!src) return '';
-  const match = src.match(/\/embed\/([^?&#/]+)/);
-  return match?.[1] || '';
+  return src.match(/\/embed\/([^?&#/]+)/)?.[1] || '';
 };
 
-const nativePostMessage = Window.prototype.postMessage;
+const nativePostMessage: any = Window.prototype.postMessage;
 
 const rawPost = (target: Window | null, payload: unknown) => {
   if (!target) return;
   try {
     mirrorGuard = true;
-    nativePostMessage.call(target, typeof payload === 'string' ? payload : JSON.stringify(payload), '*');
+    nativePostMessage.call(
+      target,
+      typeof payload === 'string' ? payload : JSON.stringify(payload),
+      '*'
+    );
   } catch {
-    // Ignore transient cross-origin/window teardown races.
+    // Ignore transient iframe/window teardown races.
   } finally {
     mirrorGuard = false;
   }
 };
 
 const command = (func: string, args: any[] = []) => {
-  rawPost(singletonFrame?.contentWindow || null, {
-    event: 'command',
-    func,
-    args,
-  });
+  rawPost(singletonFrame?.contentWindow || null, { event: 'command', func, args });
 };
 
 const createSingleton = (videoId: string) => {
@@ -46,14 +47,19 @@ const createSingleton = (videoId: string) => {
   frame.id = SINGLETON_ID;
   frame.title = 'CyberPulse persistent audio transport';
   frame.allow = 'autoplay; encrypted-media; picture-in-picture';
-  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&controls=0&playsinline=1&autoplay=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`;
-  frame.style.position = 'fixed';
-  frame.style.left = '-10000px';
-  frame.style.top = '-10000px';
-  frame.style.width = '2px';
-  frame.style.height = '2px';
-  frame.style.opacity = '0';
-  frame.style.pointerEvents = 'none';
+  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&controls=0&playsinline=1&autoplay=1&rel=0&origin=${encodeURIComponent(
+    window.location.origin
+  )}`;
+  Object.assign(frame.style, {
+    position: 'fixed',
+    left: '-10000px',
+    top: '-10000px',
+    width: '2px',
+    height: '2px',
+    opacity: '0',
+    pointerEvents: 'none',
+    border: '0',
+  });
   frame.setAttribute('aria-hidden', 'true');
   document.body.appendChild(frame);
 
@@ -80,16 +86,13 @@ const switchVideo = (videoId: string, shouldPlay = true) => {
 
   if (!singletonFrame) {
     currentTime = 0;
+    duration = 0;
     playbackState = shouldPlay ? 'playing' : 'paused';
     createSingleton(videoId);
     return;
   }
 
-  if (videoId === activeVideoId) {
-    command('unMute');
-    command(playbackState === 'playing' ? 'playVideo' : 'pauseVideo');
-    return;
-  }
+  if (videoId === activeVideoId) return;
 
   activeVideoId = videoId;
   currentTime = 0;
@@ -99,7 +102,7 @@ const switchVideo = (videoId: string, shouldPlay = true) => {
   window.setTimeout(() => {
     command('unMute');
     command(shouldPlay ? 'playVideo' : 'pauseVideo');
-  }, 80);
+  }, 100);
 };
 
 const seek = (seconds: number) => {
@@ -110,6 +113,7 @@ const seek = (seconds: number) => {
 
 const toggle = () => {
   if (!singletonFrame) return;
+
   if (playbackState === 'playing') {
     playbackState = 'paused';
     command('pauseVideo');
@@ -125,23 +129,30 @@ const visibleFrames = () =>
     (frame) => frame.id !== SINGLETON_ID
   );
 
-const syncVisibleFrame = (frame: HTMLIFrameElement) => {
+const syncVisibleFrame = (frame: HTMLIFrameElement, force = false) => {
   const id = extractVideoId(frame.src);
   if (!id) return;
 
-  if (!activeVideoId) {
-    switchVideo(id, true);
-  } else if (id !== activeVideoId) {
-    switchVideo(id, true);
+  if (!activeVideoId || id !== activeVideoId) switchVideo(id, true);
+
+  const sameRenderer = frame === lastSyncedFrame && frame.src === lastSyncedSrc;
+  if (sameRenderer && !force) {
+    rawPost(frame.contentWindow, { event: 'command', func: 'mute', args: [] });
+    return;
   }
+
+  lastSyncedFrame = frame;
+  lastSyncedSrc = frame.src;
 
   const apply = () => {
     rawPost(frame.contentWindow, { event: 'command', func: 'mute', args: [] });
-    rawPost(frame.contentWindow, {
-      event: 'command',
-      func: 'seekTo',
-      args: [currentTime, true],
-    });
+    if (currentTime > 0) {
+      rawPost(frame.contentWindow, {
+        event: 'command',
+        func: 'seekTo',
+        args: [currentTime, true],
+      });
+    }
     rawPost(frame.contentWindow, {
       event: 'command',
       func: playbackState === 'playing' ? 'playVideo' : 'pauseVideo',
@@ -153,12 +164,13 @@ const syncVisibleFrame = (frame: HTMLIFrameElement) => {
   window.setTimeout(apply, 450);
 };
 
-// Mirror commands sent by the React full player into the one persistent
-// transport. Visible YouTube iframes are muted renderers only.
-Window.prototype.postMessage = function patchedPostMessage(
+// Mirror React's direct YouTube iframe commands into the persistent transport.
+// The visible iframe is always muted, so it only renders picture while the
+// singleton owns the one real audio stream and canonical timeline.
+(Window.prototype as any).postMessage = function patchedPostMessage(
   message: any,
-  targetOriginOrOptions?: string | WindowPostMessageOptions,
-  transfer?: Transferable[]
+  targetOriginOrOptions?: any,
+  transfer?: any
 ) {
   if (!mirrorGuard && singletonFrame && this !== singletonFrame.contentWindow) {
     try {
@@ -172,16 +184,16 @@ Window.prototype.postMessage = function patchedPostMessage(
         command(func, args);
       }
     } catch {
-      // Non-YouTube postMessage; pass through untouched.
+      // Pass non-YouTube postMessage traffic through unchanged.
     }
   }
 
-  return nativePostMessage.call(this, message, targetOriginOrOptions as any, transfer as any);
-} as typeof Window.prototype.postMessage;
+  return nativePostMessage.call(this, message, targetOriginOrOptions, transfer);
+};
 
-// This listener is installed before CyberPulseApp. Ignore state/time messages
-// from stale visible renderers, allowing the singleton alone to drive React's
-// isPlaying + seekSeconds values on mini, full, and widget surfaces.
+// Install before CyberPulseApp's listener. Stale visible renderers must never
+// overwrite React's seekSeconds/isPlaying state. Only singleton messages are
+// allowed through as playback truth.
 window.addEventListener(
   'message',
   (event) => {
@@ -194,7 +206,6 @@ window.addEventListener(
       event.stopImmediatePropagation();
       return;
     }
-
     if (!sourceIsSingleton) return;
 
     try {
@@ -220,11 +231,15 @@ const matchDemoTrack = (title: string, artist: string) => {
   return DEMO_TRACKS.find((track) => {
     const tt = track.title.toLowerCase();
     const aa = track.artist.toLowerCase();
-    return (tt === t || t.includes(tt) || tt.includes(t)) && (!a || aa === a || a.includes(aa) || aa.includes(a));
+    return (
+      (tt === t || t.includes(tt) || tt.includes(t)) &&
+      (!a || aa === a || a.includes(aa) || aa.includes(a))
+    );
   });
 };
 
 const renderedTrack = (): { title: string; artist: string } | null => {
+  // Simulated Android media widget.
   const mediaLabel = Array.from(document.querySelectorAll<HTMLElement>('span')).find(
     (el) => el.textContent?.trim() === 'MEDIA SESSION'
   );
@@ -233,11 +248,16 @@ const renderedTrack = (): { title: string; artist: string } | null => {
   const widgetArtist = widget?.querySelector('p')?.textContent?.trim();
   if (widgetTitle) return { title: widgetTitle, artist: widgetArtist || '' };
 
-  const ytButton = document.querySelector<HTMLButtonElement>('button[title="Play YouTube video version"]');
+  // Docked mini player.
+  const ytButton = document.querySelector<HTMLButtonElement>(
+    'button[title="Play YouTube video version"]'
+  );
   const mini = ytButton?.parentElement;
   if (mini) {
     const allText = mini.textContent?.toLowerCase() || '';
-    const track = DEMO_TRACKS.find((candidate) => allText.includes(candidate.title.toLowerCase()));
+    const track = DEMO_TRACKS.find((candidate) =>
+      allText.includes(candidate.title.toLowerCase())
+    );
     if (track) return { title: track.title, artist: track.artist };
   }
 
@@ -284,7 +304,7 @@ const enhanceBackgroundSeek = () => {
   if (!progressRoot) return;
 
   const labels = Array.from(progressRoot.querySelectorAll('span'));
-  const end = labels.at(-1)?.textContent?.trim() || '4:00';
+  const end = labels.length ? labels[labels.length - 1].textContent?.trim() || '4:00' : '4:00';
   const parts = end.split(':').map(Number);
   const displayedDuration = parts.length === 2 ? parts[0] * 60 + parts[1] : 240;
 
@@ -313,7 +333,9 @@ const enhanceBackgroundSeek = () => {
 const observer = new MutationObserver((records) => {
   for (const record of records) {
     if (record.type === 'attributes' && record.target instanceof HTMLIFrameElement) {
-      if (record.target.id !== SINGLETON_ID && record.target.matches(YT_SELECTOR)) syncVisibleFrame(record.target);
+      if (record.target.id !== SINGLETON_ID && record.target.matches(YT_SELECTOR)) {
+        syncVisibleFrame(record.target, true);
+      }
     }
 
     for (const node of Array.from(record.addedNodes)) {
@@ -322,7 +344,7 @@ const observer = new MutationObserver((records) => {
         ...(node.matches?.(YT_SELECTOR) ? [node as HTMLIFrameElement] : []),
         ...Array.from(node.querySelectorAll?.<HTMLIFrameElement>(YT_SELECTOR) || []),
       ].filter((frame) => frame.id !== SINGLETON_ID);
-      frames.forEach(syncVisibleFrame);
+      frames.forEach((frame) => syncVisibleFrame(frame, true));
     }
   }
 
@@ -337,6 +359,9 @@ observer.observe(document.documentElement, {
   attributeFilter: ['src'],
 });
 
+// Controls on all three surfaces now drive the same singleton. React may also
+// send the corresponding explicit play/pause command; repeating the same final
+// state is harmless and prevents the old 'widget is only visual' behaviour.
 document.addEventListener(
   'click',
   (event) => {
@@ -344,18 +369,42 @@ document.addEventListener(
     if (!button) return;
 
     const title = button.getAttribute('title') || '';
-    const hasVisibleFrame = visibleFrames().length > 0;
 
-    // Mini/background controls have no React iframe ref. Drive singleton there.
-    if (!hasVisibleFrame && (title === 'Play' || title === 'Pause')) toggle();
+    if (title === 'Play' || title === 'Pause') {
+      syncFromUi();
+      toggle();
+    }
 
-    if (title === 'Previous track' || title === 'Previous Track' || title === 'Next track' || title === 'Next Track') {
+    if (
+      title === 'Previous track' ||
+      title === 'Previous Track' ||
+      title === 'Next track' ||
+      title === 'Next Track'
+    ) {
       window.setTimeout(syncFromUi, 0);
       window.setTimeout(syncFromUi, 120);
     }
 
-    if (button.textContent?.includes('Return to App') || button.textContent?.includes('Tap to open app')) {
+    if (
+      button.textContent?.includes('Return to App') ||
+      button.textContent?.includes('Tap to open app')
+    ) {
       window.setTimeout(syncFromUi, 0);
+    }
+  },
+  true
+);
+
+// The full-player range input must seek the singleton directly too. This makes
+// rewind/forward survive closing the modal and opening the mini/widget player.
+document.addEventListener(
+  'input',
+  (event) => {
+    const input = event.target as HTMLInputElement | null;
+    if (!input || input.type !== 'range') return;
+    if (input.dataset.cyberpulseSeek === 'true' || visibleFrames().length > 0) {
+      const value = Number(input.value);
+      if (Number.isFinite(value)) seek(value);
     }
   },
   true
@@ -375,7 +424,7 @@ window.setInterval(() => {
   syncFromUi();
   enhanceBackgroundSeek();
 
-  // Visible iframe is video-only. Keep it muted so audio can never double.
+  // Never let a visible renderer become a second audible source.
   const frame = visibleFrames()[0];
   if (frame) rawPost(frame.contentWindow, { event: 'command', func: 'mute', args: [] });
 }, 750);
