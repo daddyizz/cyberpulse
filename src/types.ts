@@ -97,7 +97,7 @@ export type ScreenType =
   | 'ai_playlist'
   | 'section_detail';
 
-export type CyberTheme = 'frosted' | 'sporty' | 'oled' | 'cyberpunk';
+export type CyberTheme = 'frosted' | 'sporty' | 'oled' | 'cyberpunk' | 'minimal';
 
 export interface AppPreferences {
   theme: CyberTheme;
