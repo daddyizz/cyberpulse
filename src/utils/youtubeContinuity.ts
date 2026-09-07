@@ -116,6 +116,25 @@ const seekPlayback = (seconds: number) => {
   sendCommand(activeFrame, 'seekTo', [lastTime, true]);
 };
 
+const loadLegacyDemoTrack = (trackIndex: number) => {
+  if (!activeFrame || DEMO_TRACKS.length === 0) return;
+  const safeIndex = (trackIndex + DEMO_TRACKS.length) % DEMO_TRACKS.length;
+  const track = DEMO_TRACKS[safeIndex];
+  if (!track?.youtubeVideoId) return;
+
+  activeVideoId = track.youtubeVideoId;
+  lastTime = 0;
+  lastDuration = track.durationSeconds || 0;
+  const origin = encodeURIComponent(window.location.origin);
+  activeFrame.src = `https://www.youtube-nocookie.com/embed/${activeVideoId}?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&autoplay=1&origin=${origin}`;
+};
+
+const navigateLegacy = (direction: 1 | -1) => {
+  const currentIndex = DEMO_TRACKS.findIndex((track) => track.youtubeVideoId === activeVideoId);
+  if (currentIndex === -1) return;
+  loadLegacyDemoTrack(currentIndex + direction);
+};
+
 window.addEventListener('message', (event) => {
   if (!activeFrame?.contentWindow || event.source !== activeFrame.contentWindow || !event.data) return;
   try {
@@ -171,22 +190,32 @@ window.addEventListener('cyberpulse:resume-sync', () => {
   restoreFrame(activeFrame, true);
 });
 
-// Legacy batch helper: lets the simulated background widget switch the canonical hidden player too.
 window.addEventListener('cyberpulse:demo-track', ((event: Event) => {
   const detail = (event as CustomEvent<{ title?: string; artist?: string }>).detail;
-  const match = DEMO_TRACKS.find(
+  const index = DEMO_TRACKS.findIndex(
     (track) =>
       track.title.toLowerCase() === detail?.title?.toLowerCase() &&
       track.artist.toLowerCase() === detail?.artist?.toLowerCase()
   );
-  if (!match?.youtubeVideoId || !activeFrame || match.youtubeVideoId === activeVideoId) return;
-
-  activeVideoId = match.youtubeVideoId;
-  lastTime = 0;
-  lastDuration = match.durationSeconds || 0;
-  const origin = encodeURIComponent(window.location.origin);
-  activeFrame.src = `https://www.youtube-nocookie.com/embed/${activeVideoId}?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&autoplay=1&origin=${origin}`;
+  if (index >= 0) loadLegacyDemoTrack(index);
 }) as EventListener);
+
+// When the real player iframe is hidden, mini-player/widget controls still operate the same canonical transport.
+document.addEventListener(
+  'click',
+  (event) => {
+    if (!activeFrame || !hiddenHost?.contains(activeFrame)) return;
+    const target = event.target as HTMLElement | null;
+    const button = target?.closest<HTMLButtonElement>('button');
+    if (!button) return;
+    const title = (button.getAttribute('title') || '').toLowerCase();
+
+    if (title === 'play' || title === 'pause') togglePlayback();
+    else if (title.includes('next track')) navigateLegacy(1);
+    else if (title.includes('previous track')) navigateLegacy(-1);
+  },
+  true
+);
 
 // Keep the simulated Android widget seek bar functional without creating a second transport.
 const enhanceBackgroundWidget = () => {
