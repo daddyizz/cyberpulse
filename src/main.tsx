@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './data/playbackSanitizer';
 import './utils/youtubeContinuity';
+import './utils/playerModeContinuity';
 import './utils/settingsNavigation';
 import { hydrateLiveCatalog } from './services/liveCatalogService';
 import App from './App.tsx';
