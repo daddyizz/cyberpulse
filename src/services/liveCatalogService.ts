@@ -24,10 +24,21 @@ const slug = (value: string) =>
 
 const trackKey = (track: Track) => `${track.title.trim().toLowerCase()}::${track.artist.trim().toLowerCase()}`;
 
+const sanitizeLiveTrack = (track: Track): Track => {
+  const audio = (track.audioUrl || '').toLowerCase();
+  const previewOnly =
+    track.source === 'SPOTIFY' ||
+    audio.includes('/audiopreview') ||
+    audio.includes('itunes-assets/audiopreview');
+
+  return previewOnly ? { ...track, audioUrl: undefined } : { ...track };
+};
+
 const mergeUniqueTracks = (liveTracks: Track[], seedTracks: Track[]): Track[] => {
   const seen = new Set<string>();
   const merged: Track[] = [];
-  for (const track of [...liveTracks, ...seedTracks]) {
+  for (const rawTrack of [...liveTracks, ...seedTracks]) {
+    const track = sanitizeLiveTrack(rawTrack);
     const key = trackKey(track);
     if (!track.title || !track.artist || seen.has(key)) continue;
     seen.add(key);
@@ -87,12 +98,10 @@ const applyCatalog = (catalog: LiveCatalogCache) => {
   const currentFirst = DEMO_TRACKS[0];
   const mergedTracks = mergeUniqueTracks(catalog.tracks, DEMO_TRACKS).slice(0, 64);
 
-  // Preserve the current/last-played seed at index 0 so restoring a previous
-  // listening session still works, then rotate fresh live items immediately after it.
   if (currentFirst) {
     const firstKey = trackKey(currentFirst);
     const withoutFirst = mergedTracks.filter((track) => trackKey(track) !== firstKey);
-    DEMO_TRACKS.splice(0, DEMO_TRACKS.length, currentFirst, ...withoutFirst);
+    DEMO_TRACKS.splice(0, DEMO_TRACKS.length, sanitizeLiveTrack(currentFirst), ...withoutFirst);
   } else {
     DEMO_TRACKS.splice(0, DEMO_TRACKS.length, ...mergedTracks);
   }
@@ -121,6 +130,7 @@ const readCache = (): LiveCatalogCache | null => {
     const parsed = JSON.parse(raw) as LiveCatalogCache;
     if (!parsed?.updatedAt || !Array.isArray(parsed.tracks)) return null;
     if (Date.now() - parsed.updatedAt > CACHE_TTL_MS) return null;
+    parsed.tracks = parsed.tracks.map(sanitizeLiveTrack);
     return parsed;
   } catch {
     return null;
@@ -137,8 +147,8 @@ const writeCache = (catalog: LiveCatalogCache) => {
 
 /**
  * Refresh the app's discovery seed from live Spotify + YouTube data.
- * mockData remains the offline fallback, while the arrays it exports are
- * hydrated before React mounts so Home/Explore/artist/album surfaces rotate.
+ * mockData remains the offline fallback, while exported arrays are hydrated
+ * before React mounts so songs, artists and albums rotate automatically.
  */
 export async function hydrateLiveCatalog(): Promise<void> {
   const cached = readCache();
@@ -160,7 +170,7 @@ export async function hydrateLiveCatalog(): Promise<void> {
   for (const result of settled) {
     if (result.status !== 'fulfilled') continue;
     const value = result.value as { tracks?: Track[] };
-    if (Array.isArray(value.tracks)) liveTracks.push(...value.tracks);
+    if (Array.isArray(value.tracks)) liveTracks.push(...value.tracks.map(sanitizeLiveTrack));
   }
 
   const uniqueLive = mergeUniqueTracks(liveTracks, []).slice(0, MAX_LIVE_TRACKS);
