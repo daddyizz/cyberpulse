@@ -9,7 +9,6 @@
   }
 }
 
-/* Custom cyber scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -28,3 +27,95 @@
   background: #00F5FF;
 }
 
+.cyber-settings-focus {
+  outline: 2px solid rgba(0, 245, 255, 0.65);
+  outline-offset: 4px;
+}
+
+/* Premium Light — clean white minimalist skin without changing app structure. */
+html.cyber-theme-minimal body,
+html.cyber-theme-minimal #root {
+  background: #eef2f7 !important;
+  color: #0f172a !important;
+}
+
+html.cyber-theme-minimal .cyber-global-ambient {
+  display: none !important;
+}
+
+html.cyber-theme-minimal [class*="bg-[#07090F]"],
+html.cyber-theme-minimal [class*="bg-[#10131C]"],
+html.cyber-theme-minimal [class*="bg-[#0C0C0C]"],
+html.cyber-theme-minimal [class*="bg-[#0E131F]"],
+html.cyber-theme-minimal [class*="bg-[#0A0D17]"],
+html.cyber-theme-minimal [class*="bg-[#0D101C]"] {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  background-image: none !important;
+}
+
+html.cyber-theme-minimal [class*="bg-[#171B28]"] {
+  background-color: #e8edf4 !important;
+}
+
+html.cyber-theme-minimal [class*="text-[#F7F8FC]"],
+html.cyber-theme-minimal [class*="text-white"] {
+  color: #0f172a !important;
+}
+
+html.cyber-theme-minimal [class*="text-[#9CA3B7]"],
+html.cyber-theme-minimal [class*="text-[#61697C]"] {
+  color: #64748b !important;
+}
+
+html.cyber-theme-minimal [class*="text-[#00F5FF]"] {
+  color: #2563eb !important;
+}
+
+html.cyber-theme-minimal [class*="bg-[#00F5FF]"] {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html.cyber-theme-minimal [class*="border-[#171B28]"] {
+  border-color: #dbe3ed !important;
+}
+
+html.cyber-theme-minimal [class*="border-[#00F5FF]"] {
+  border-color: rgba(37, 99, 235, 0.42) !important;
+}
+
+html.cyber-theme-minimal [class*="shadow-[#00F5FF]"],
+html.cyber-theme-minimal [class*="shadow-black"] {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08) !important;
+}
+
+html.cyber-theme-minimal [class*="backdrop-blur"] {
+  backdrop-filter: blur(18px);
+}
+
+html.cyber-theme-minimal input,
+html.cyber-theme-minimal textarea,
+html.cyber-theme-minimal select {
+  color: #0f172a !important;
+}
+
+html.cyber-theme-minimal input[type="range"] {
+  accent-color: #2563eb !important;
+}
+
+html.cyber-theme-minimal ::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+html.cyber-theme-minimal ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+html.cyber-theme-minimal ::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+}
+
+html.cyber-theme-minimal .cyber-settings-focus {
+  outline-color: rgba(37, 99, 235, 0.55);
+}
