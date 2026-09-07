@@ -2,6 +2,27 @@ const SINGLETON_ID = 'cyberpulse-youtube-singleton';
 const CANONICAL_MARKER = '__cyberpulseCanonical';
 const INTENT_MARKER_ID = 'cyberpulse-mode-intent-marker';
 
+let canonicalPlaying = false;
+let canonicalTime = 0;
+let hasCanonicalState = false;
+
+window.addEventListener('message', (event) => {
+  let data: any = event.data;
+  try {
+    if (typeof data === 'string') data = JSON.parse(data);
+  } catch {
+    return;
+  }
+  if (!data?.[CANONICAL_MARKER]) return;
+  if (data.event === 'onStateChange') {
+    canonicalPlaying = data.info === 1;
+    hasCanonicalState = true;
+  }
+  if (data.event === 'infoDelivery' && typeof data.info?.currentTime === 'number') {
+    canonicalTime = Math.max(0, data.info.currentTime);
+  }
+});
+
 const send = (func: string, args: unknown[] = []) => {
   const frame = document.getElementById(SINGLETON_ID) as HTMLIFrameElement | null;
   try {
@@ -12,6 +33,7 @@ const send = (func: string, args: unknown[] = []) => {
 };
 
 const currentUiTime = (modal: HTMLElement): number => {
+  if (canonicalTime > 0) return canonicalTime;
   const ranges = Array.from(modal.querySelectorAll<HTMLInputElement>('input[type="range"]'));
   const playbackRange = ranges.find((range) => Number(range.max || 0) >= 60);
   const value = Number(playbackRange?.value || 0);
@@ -19,6 +41,9 @@ const currentUiTime = (modal: HTMLElement): number => {
 };
 
 const emitState = (playing: boolean, time: number) => {
+  canonicalPlaying = playing;
+  canonicalTime = time;
+  hasCanonicalState = true;
   window.dispatchEvent(
     new MessageEvent('message', {
       data: {
@@ -57,12 +82,11 @@ const holdPlaybackIntent = (playing: boolean) => {
     top: '-9999px',
   });
   document.body.appendChild(marker);
-  window.setTimeout(() => marker.remove(), 700);
+  window.setTimeout(() => marker.remove(), 750);
 };
 
-// Audio Only <-> Music Video is presentation-only. Capture transport state
-// before React swaps the renderer and hold that state while all observers and
-// effects settle. This specifically prevents Video -> Audio from pausing.
+// Audio Only <-> Music Video is presentation-only. Capture canonical transport
+// state before React swaps the renderer and hold it while all effects settle.
 document.addEventListener(
   'click',
   (event) => {
@@ -76,7 +100,8 @@ document.addEventListener(
     const modal = button.closest<HTMLElement>('div.absolute.inset-0');
     if (!modal) return;
 
-    const wasPlaying = Boolean(modal.querySelector('button[title="Pause"]'));
+    const uiSaysPlaying = Boolean(modal.querySelector('button[title="Pause"]'));
+    const wasPlaying = hasCanonicalState ? canonicalPlaying : uiSaysPlaying;
     const time = currentUiTime(modal);
     holdPlaybackIntent(wasPlaying);
 
@@ -102,9 +127,9 @@ document.addEventListener(
         });
     };
 
-    window.setTimeout(restore, 30);
-    window.setTimeout(restore, 120);
-    window.setTimeout(restore, 260);
+    window.setTimeout(restore, 20);
+    window.setTimeout(restore, 100);
+    window.setTimeout(restore, 240);
     window.setTimeout(restore, 520);
   },
   true
