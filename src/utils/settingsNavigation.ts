@@ -3,6 +3,7 @@ const TARGET_KEY = 'cyberpulse_settings_target';
 const labelTargets: Record<string, string> = {
   'Account & Subscription': 'settings-account',
   'Appearance & Themes (Sporty, OLED, Frosted)': 'settings-appearance',
+  'Appearance & Themes': 'settings-appearance',
   'Audio Engine & DSP Preferences': 'settings-audio',
   'Notifications & Cache': 'settings-system',
 };
@@ -29,18 +30,20 @@ const scrollToPendingSection = () => {
   }
 };
 
-const hideAdMobProfileEntry = () => {
-  const labels = Array.from(document.querySelectorAll<HTMLElement>('span')).filter(
-    (el) => el.textContent?.trim() === 'Google AdMob Configuration'
-  );
+const polishProfilePreferences = () => {
+  const labels = Array.from(document.querySelectorAll<HTMLElement>('span'));
   for (const label of labels) {
-    const row = label.closest<HTMLElement>('div.flex.items-center.justify-between');
-    if (row) row.style.display = 'none';
+    const text = label.textContent?.trim();
+    if (text === 'Google AdMob Configuration') {
+      const row = label.closest<HTMLElement>('div.flex.items-center.justify-between');
+      if (row) row.style.display = 'none';
+    }
+    if (text === 'Appearance & Themes (Sporty, OLED, Frosted)') {
+      label.textContent = 'Appearance & Themes';
+    }
   }
 };
 
-// Profile rows already navigate with React. Remember which Settings section the
-// user intended, then scroll there as soon as SettingsView mounts.
 document.addEventListener(
   'click',
   (event) => {
@@ -62,9 +65,9 @@ document.addEventListener(
 );
 
 const observer = new MutationObserver(() => {
-  hideAdMobProfileEntry();
+  polishProfilePreferences();
   scrollToPendingSection();
 });
 observer.observe(document.documentElement, { childList: true, subtree: true });
 
-window.setTimeout(hideAdMobProfileEntry, 0);
+window.setTimeout(polishProfilePreferences, 0);
