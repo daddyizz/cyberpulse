@@ -1,5 +1,6 @@
 const SINGLETON_ID = 'cyberpulse-youtube-singleton';
 const CANONICAL_MARKER = '__cyberpulseCanonical';
+const INTENT_MARKER_ID = 'cyberpulse-mode-intent-marker';
 
 const send = (func: string, args: unknown[] = []) => {
   const frame = document.getElementById(SINGLETON_ID) as HTMLIFrameElement | null;
@@ -38,9 +39,30 @@ const emitState = (playing: boolean, time: number) => {
   );
 };
 
-// Switching Audio Only <-> Music Video is presentation-only. Capture the
-// transport state before React changes the renderer, then re-assert it after
-// the renderer mounts/unmounts. This prevents Video -> Audio from pausing.
+const holdPlaybackIntent = (playing: boolean) => {
+  document.getElementById(INTENT_MARKER_ID)?.remove();
+  const marker = document.createElement('button');
+  marker.id = INTENT_MARKER_ID;
+  marker.type = 'button';
+  marker.title = playing ? 'Pause' : 'Play';
+  marker.tabIndex = -1;
+  marker.setAttribute('aria-hidden', 'true');
+  Object.assign(marker.style, {
+    position: 'fixed',
+    width: '1px',
+    height: '1px',
+    opacity: '0',
+    pointerEvents: 'none',
+    left: '-9999px',
+    top: '-9999px',
+  });
+  document.body.appendChild(marker);
+  window.setTimeout(() => marker.remove(), 700);
+};
+
+// Audio Only <-> Music Video is presentation-only. Capture transport state
+// before React swaps the renderer and hold that state while all observers and
+// effects settle. This specifically prevents Video -> Audio from pausing.
 document.addEventListener(
   'click',
   (event) => {
@@ -56,14 +78,13 @@ document.addEventListener(
 
     const wasPlaying = Boolean(modal.querySelector('button[title="Pause"]'));
     const time = currentUiTime(modal);
+    holdPlaybackIntent(wasPlaying);
 
     const restore = () => {
       if (time > 0) send('seekTo', [time, true]);
       send(wasPlaying ? 'playVideo' : 'pauseVideo');
       emitState(wasPlaying, time);
 
-      // Visible YouTube iframes are renderers only; keep them muted so the
-      // canonical hidden transport remains the only audible source.
       document
         .querySelectorAll<HTMLIFrameElement>(
           'iframe[src*="youtube.com/embed"],iframe[src*="youtube-nocookie.com/embed"]'
@@ -81,9 +102,10 @@ document.addEventListener(
         });
     };
 
-    window.setTimeout(restore, 40);
-    window.setTimeout(restore, 160);
-    window.setTimeout(restore, 420);
+    window.setTimeout(restore, 30);
+    window.setTimeout(restore, 120);
+    window.setTimeout(restore, 260);
+    window.setTimeout(restore, 520);
   },
   true
 );
