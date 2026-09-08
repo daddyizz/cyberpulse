@@ -1,10 +1,10 @@
 import { DEMO_PLAYLISTS, DEMO_TRACKS } from './mockData';
 
 /**
- * Playback safety layer.
- * - Removes legacy Apple/iTunes 30–60 second previews from the seed catalog.
- * - Cleans previously saved Spotify imports so tracks without a verified YouTube
- *   full-playback ID are not offered as playable songs.
+ * Playback / migration safety layer.
+ * - Removes legacy Apple/iTunes preview audio.
+ * - Removes bundled demo playlists that older builds accidentally persisted.
+ * - Keeps user/imported playlists, while pruning unplayable legacy Spotify rows.
  * - Applies playlist deletion tombstones before React initializes Library state.
  */
 const isPreviewOnlyAudio = (url?: string): boolean => {
@@ -15,6 +15,9 @@ const isPreviewOnlyAudio = (url?: string): boolean => {
     normalized.includes('/audiopreview')
   );
 };
+
+// Capture the bundled playlist IDs before liveCatalogService replaces the arrays.
+const bundledPlaylistIds = new Set(DEMO_PLAYLISTS.map((playlist) => String(playlist.id)));
 
 for (const track of DEMO_TRACKS) {
   if (!isPreviewOnlyAudio(track.audioUrl)) continue;
@@ -50,25 +53,34 @@ if (typeof window !== 'undefined') {
       const playlists = JSON.parse(raw);
       if (Array.isArray(playlists)) {
         let changed = false;
-        const migrated = playlists.map((playlist: any) => {
-          if (!playlist || !Array.isArray(playlist.tracks)) return playlist;
 
-          let tracks = playlist.tracks.map((track: any) => ({
-            ...track,
-            audioUrl: isPreviewOnlyAudio(track?.audioUrl) ? undefined : track?.audioUrl,
-          }));
+        const migrated = playlists
+          // Older builds persisted DEMO_PLAYLISTS together with real user data.
+          // Remove those bundled rows permanently; live catalog playlists are rebuilt online.
+          .filter((playlist: any) => {
+            const isBundledDemo = playlist?.id && bundledPlaylistIds.has(String(playlist.id));
+            if (isBundledDemo) changed = true;
+            return !isBundledDemo;
+          })
+          .map((playlist: any) => {
+            if (!playlist || !Array.isArray(playlist.tracks)) return playlist;
 
-          if (playlist.source === 'SPOTIFY') {
-            tracks = tracks.filter((track: any) => Boolean(track?.youtubeVideoId));
-          }
+            let tracks = playlist.tracks.map((track: any) => ({
+              ...track,
+              audioUrl: isPreviewOnlyAudio(track?.audioUrl) ? undefined : track?.audioUrl,
+            }));
 
-          if (tracks.length !== playlist.tracks.length) changed = true;
-          return {
-            ...playlist,
-            tracks,
-            trackCount: tracks.length,
-          };
-        });
+            if (playlist.source === 'SPOTIFY') {
+              tracks = tracks.filter((track: any) => Boolean(track?.youtubeVideoId));
+            }
+
+            if (tracks.length !== playlist.tracks.length) changed = true;
+            return {
+              ...playlist,
+              tracks,
+              trackCount: tracks.length,
+            };
+          });
 
         if (changed) {
           window.localStorage.setItem('sona_custom_playlists', JSON.stringify(migrated));
