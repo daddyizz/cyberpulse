@@ -7,6 +7,7 @@ import './utils/settingsNavigation';
 import { hydrateLiveCatalog } from './services/liveCatalogService';
 import App from './App.tsx';
 import './index.css';
+import './pureLightOverrides.css';
 
 async function bootstrap() {
   try {
