@@ -1,6 +1,17 @@
 import { DEMO_ARTISTS, GENRE_OPTIONS } from '../data/mockData';
 
-let selectedGenres = new Set<string>();
+const initialGenres = (() => {
+  try {
+    const raw = localStorage.getItem('cyberpulse_preferences');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(parsed?.selectedGenres) && parsed.selectedGenres.length) {
+      return parsed.selectedGenres.map(String);
+    }
+  } catch {}
+  return ['Electronic', 'Synthwave', 'Metal'];
+})();
+
+let selectedGenres = new Set<string>(initialGenres);
 
 const normalize = (value?: string) => (value || '').trim().toLowerCase();
 
@@ -38,9 +49,7 @@ const applyArtistFilter = () => {
 
   const relevantNames = new Set(
     DEMO_ARTISTS
-      .filter((artist) =>
-        artist.genres?.some((genre) => chosen.has(normalize(genre)))
-      )
+      .filter((artist) => artist.genres?.some((genre) => chosen.has(normalize(genre))))
       .map((artist) => artist.name)
   );
 
