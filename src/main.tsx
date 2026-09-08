@@ -1,9 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './data/playbackSanitizer';
-import './utils/uiPlaybackClockRepair';
+import './utils/selectedTrackPlayback';
 import './utils/onboardingGenreArtistFilter';
 import './utils/liveHomePresentation';
+import './utils/uiRuntimeCleanup';
 import './utils/settingsNavigation';
 import { hydrateLiveCatalog } from './services/liveCatalogService';
 import App from './App.tsx';
