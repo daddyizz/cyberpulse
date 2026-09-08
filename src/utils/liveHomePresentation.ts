@@ -11,7 +11,7 @@ const syncHomeHero = () => {
   if (!livePlaylist && !liveTrack) return;
 
   heading.dataset.liveHomeHero = 'true';
-  heading.textContent = livePlaylist?.title || liveTrack?.album || liveTrack?.title || 'Live Discovery';
+  heading.textContent = livePlaylist?.title || 'Sona Fresh';
 
   const card = heading.closest<HTMLElement>('div.relative');
   if (!card) return;
@@ -21,13 +21,13 @@ const syncHomeHero = () => {
   if (description) {
     description.textContent =
       livePlaylist?.description ||
-      (liveTrack ? `Live discovery featuring ${liveTrack.title} by ${liveTrack.artist}. Refreshed from online music sources.` : 'Live music discovery.');
+      (liveTrack ? `Fresh discovery featuring ${liveTrack.title} by ${liveTrack.artist}. Refreshed automatically.` : 'Fresh live music discovery.');
   }
 
   const badge = Array.from(card.querySelectorAll<HTMLElement>('span')).find((span) =>
-    /featured mix/i.test(span.textContent || '')
+    /featured mix|live mix/i.test(span.textContent || '')
   );
-  if (badge) badge.textContent = 'LIVE MIX';
+  if (badge) badge.textContent = 'SONA LIVE';
 
   const artwork = livePlaylist?.artworkUrl || liveTrack?.artworkUrl;
   if (artwork) {
