@@ -1,10 +1,11 @@
-import { DEMO_TRACKS } from './mockData';
+import { DEMO_PLAYLISTS, DEMO_TRACKS } from './mockData';
 
 /**
  * Playback safety layer.
  * - Removes legacy Apple/iTunes 30–60 second previews from the seed catalog.
  * - Cleans previously saved Spotify imports so tracks without a verified YouTube
  *   full-playback ID are not offered as playable songs.
+ * - Applies playlist deletion tombstones before React initializes Library state.
  */
 const isPreviewOnlyAudio = (url?: string): boolean => {
   if (!url) return false;
@@ -30,11 +31,19 @@ for (const track of DEMO_TRACKS) {
   }
 }
 
-// One-time compatible migration for Spotify playlists imported by older builds.
-// Do not keep items that only have Spotify metadata/preview data but no verified
-// YouTube video ID, because those tracks cause fake progress, dead Audio/Video
-// switching, or an unrelated fallback song.
 if (typeof window !== 'undefined') {
+  try {
+    const deletedRaw = window.localStorage.getItem('sona_deleted_playlist_ids');
+    const deletedIds = deletedRaw ? JSON.parse(deletedRaw) : [];
+    if (Array.isArray(deletedIds) && deletedIds.length) {
+      const deleted = new Set(deletedIds.map(String));
+      const keep = DEMO_PLAYLISTS.filter((playlist) => !deleted.has(String(playlist.id)));
+      DEMO_PLAYLISTS.splice(0, DEMO_PLAYLISTS.length, ...keep);
+    }
+  } catch (error) {
+    console.warn('Unable to apply deleted playlist list.', error);
+  }
+
   try {
     const raw = window.localStorage.getItem('sona_custom_playlists');
     if (raw) {
@@ -42,16 +51,16 @@ if (typeof window !== 'undefined') {
       if (Array.isArray(playlists)) {
         let changed = false;
         const migrated = playlists.map((playlist: any) => {
-          if (!playlist || playlist.source !== 'SPOTIFY' || !Array.isArray(playlist.tracks)) {
-            return playlist;
-          }
+          if (!playlist || !Array.isArray(playlist.tracks)) return playlist;
 
-          const tracks = playlist.tracks
-            .map((track: any) => ({
-              ...track,
-              audioUrl: isPreviewOnlyAudio(track?.audioUrl) ? undefined : track?.audioUrl,
-            }))
-            .filter((track: any) => Boolean(track?.youtubeVideoId));
+          let tracks = playlist.tracks.map((track: any) => ({
+            ...track,
+            audioUrl: isPreviewOnlyAudio(track?.audioUrl) ? undefined : track?.audioUrl,
+          }));
+
+          if (playlist.source === 'SPOTIFY') {
+            tracks = tracks.filter((track: any) => Boolean(track?.youtubeVideoId));
+          }
 
           if (tracks.length !== playlist.tracks.length) changed = true;
           return {
@@ -67,6 +76,6 @@ if (typeof window !== 'undefined') {
       }
     }
   } catch (error) {
-    console.warn('Unable to migrate older Spotify playlist cache.', error);
+    console.warn('Unable to migrate older playlist cache.', error);
   }
 }
