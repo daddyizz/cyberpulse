@@ -8,13 +8,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Block 6: Local Device Audio permissions -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-
-    <!-- Block 7: Google Play Billing permission -->
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
@@ -31,12 +28,11 @@
         android:theme="@style/Theme.CyberPulse"
         tools:targetApi="36">
 
-        <!-- Block 7: Google Mobile Ads (AdMob) App ID with build variant placeholders -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
 
-        <!-- Block 2 / Android Auto: Automotive App Declaration -->
+        <!-- Android Auto / projected-car media app declaration. -->
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />
@@ -52,6 +48,7 @@
             </intent-filter>
         </activity>
 
+        <!-- MediaLibraryService is browsable by Android Auto and provides playback controls. -->
         <service
             android:name=".core.player.CyberPulsePlaybackService"
             android:exported="true"
