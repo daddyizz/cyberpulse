@@ -193,7 +193,7 @@ export function VisualizerPreview({
               className="px-4 py-1.5 rounded-full bg-[#00F5FF] text-[#07090F] text-xs font-black uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Unlock CyberPulse Pro</span>
+              <span>Unlock Sona Pro</span>
             </button>
           </div>
         )}

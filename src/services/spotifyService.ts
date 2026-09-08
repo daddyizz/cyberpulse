@@ -1,4 +1,4 @@
-import { Track } from '../types';
+import { Playlist, Track } from '../types';
 
 export const SPOTIFY_CONFIG = {
   providerName: 'Spotify Official Web API',
@@ -174,3 +174,150 @@ export function getSpotifyEmbedUrl(spotifyTrackId: string): string {
   const cleanId = spotifyTrackId.replace(/^sp_/, '').replace(/^spotify:track:/, '');
   return `https://open.spotify.com/embed/track/${cleanId}?utm_source=generator&theme=0`;
 }
+
+export interface SpotifyPlaylistPreset {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  artworkUrl: string;
+}
+
+export const POPULAR_SPOTIFY_PLAYLISTS: SpotifyPlaylistPreset[] = [
+  {
+    id: '37i9dQZF1DXcBWIGoYBM5M',
+    title: "Today's Top Hits",
+    description: 'Hottest tracks on the global charts and international trends.',
+    category: 'Global Hits',
+    artworkUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: '37i9dQZF1DXadOVCgGhS7j',
+    title: 'Stealth Running Tempo',
+    description: 'High-energy tempo designed for intense cardio and rhythmic endurance.',
+    category: 'Running / Workout',
+    artworkUrl: 'https://images.unsplash.com/photo-1483721074577-832145b23d91?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: '37i9dQZF1DX0XUsuxWHRQd',
+    title: 'RapCaviar',
+    description: 'Top hip-hop compilation and rhythmic essentials.',
+    category: 'Hip-Hop',
+    artworkUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: '37i9dQZF1DX4WYpdgoIcn6',
+    title: 'Chill Hits',
+    description: 'Acoustic calm and modern pop essentials for relaxation.',
+    category: 'Chill & Acoustic',
+    artworkUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: '37i9dQZF1DWZeKCadgRdKQ',
+    title: 'Deep Focus',
+    description: 'Ambient and instrumental soundscapes for maximum productivity.',
+    category: 'Focus / Ambient',
+    artworkUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+  },
+];
+
+export interface ImportPlaylistResult {
+  success: boolean;
+  playlist?: Playlist;
+  error?: string;
+}
+
+/**
+ * Extracts raw playlist ID from URLs like:
+ * - https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M?si=abc
+ * - spotify:playlist:37i9dQZF1DXcBWIGoYBM5M
+ * - 37i9dQZF1DXcBWIGoYBM5M
+ */
+export function extractSpotifyPlaylistId(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.includes('open.spotify.com/playlist/')) {
+    const after = trimmed.split('open.spotify.com/playlist/')[1];
+    return after.split('?')[0].split('#')[0].trim() || null;
+  }
+  if (trimmed.startsWith('spotify:playlist:')) {
+    return trimmed.replace('spotify:playlist:', '').trim() || null;
+  }
+  // Alphanumeric ID typical of Spotify IDs (22 chars)
+  if (/^[a-zA-Z0-9]{15,30}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return null;
+}
+
+/**
+ * Import a playlist from Spotify using our backend proxy or fallback metadata.
+ */
+export async function importSpotifyPlaylist(playlistUrlOrId: string): Promise<ImportPlaylistResult> {
+  const playlistId = extractSpotifyPlaylistId(playlistUrlOrId);
+  if (!playlistId) {
+    return {
+      success: false,
+      error: 'Invalid Spotify link. Please enter a URL like "https://open.spotify.com/playlist/..." or a playlist ID.',
+    };
+  }
+
+  try {
+    const res = await fetch(`${SPOTIFY_CONFIG.proxyPath}/playlist?id=${encodeURIComponent(playlistId)}`);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok && !data?.name) {
+      return {
+        success: false,
+        error: data?.error?.message || data?.message || `Failed to load playlist from Spotify (HTTP ${res.status})`,
+      };
+    }
+
+    const title = data.name || 'Imported Spotify Playlist';
+    const description = data.description || 'Imported from Spotify via Sona Player';
+    const artworkUrl = pickBestArtwork(data.images) || data.images?.[0]?.url;
+    const createdBy = data.owner?.display_name || 'Spotify';
+
+    // Parse track items if returned from Spotify Web API
+    let tracks: Track[] = [];
+    if (Array.isArray(data.tracks?.items) && data.tracks.items.length > 0) {
+      tracks = data.tracks.items
+        .map((item: any) => (item.track ? mapSpotifyItemToTrack(item.track) : null))
+        .filter((t: Track | null): t is Track => Boolean(t && t.title));
+    }
+
+    // If tracks are empty (e.g. oEmbed fallback or minimal payload),
+    // fetch related tracks using the playlist title to give users immediately playable tracks!
+    if (tracks.length === 0) {
+      const searchRes = await searchSpotifyTracks(title, 8);
+      if (searchRes.tracks.length > 0) {
+        tracks = searchRes.tracks;
+      }
+    }
+
+    const importedPlaylist: Playlist = {
+      id: `sp_pl_${playlistId}_${Date.now()}`,
+      title,
+      description,
+      artworkKey: 'neon_grid',
+      artworkUrl,
+      trackCount: tracks.length,
+      createdBy: `${createdBy} (Spotify)`,
+      source: 'SPOTIFY',
+      tracks,
+    };
+
+    return {
+      success: true,
+      playlist: importedPlaylist,
+    };
+  } catch (err: any) {
+    console.error('importSpotifyPlaylist error:', err);
+    return {
+      success: false,
+      error: err?.message || 'Connection error while importing Spotify playlist.',
+    };
+  }
+}
+

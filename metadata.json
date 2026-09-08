@@ -1,6 +1,6 @@
 {
-  "name": "CyberPulse Music",
-  "description": "A modern native Android music streaming and discovery app with an original cyberpunk visual identity.",
+  "name": "Sona Music",
+  "description": "A sleek modern native Android music streaming and discovery app with dynamic audio visualization, Spotify & YouTube integration, and refined aesthetics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

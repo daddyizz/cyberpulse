@@ -143,7 +143,7 @@ export const SpotifyPlayerModal: React.FC<SpotifyPlayerModalProps> = ({
               <span>Client Credentials Authenticated</span>
             </div>
             <div className="font-mono text-[10px] text-gray-400">
-              ID: {SPOTIFY_CONFIG.clientId.slice(0, 8)}•••
+              Proxy: Active
             </div>
           </div>
         </div>

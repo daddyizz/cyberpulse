@@ -73,7 +73,7 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
           <ArrowLeft className="w-5 h-5" />
         </button>
         <span className="text-xs font-mono tracking-widest text-[#00F5FF] uppercase font-bold">
-          {config.badgeText || 'CyberPulse Collection'}
+          {config.badgeText || 'Sona Collection'}
         </span>
         <div className="w-10" />
       </div>

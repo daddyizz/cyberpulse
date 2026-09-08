@@ -39,7 +39,8 @@ import {
   Music,
   AlertCircle,
   Volume2,
-  Video
+  Video,
+  Music2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -74,9 +75,12 @@ import { cyberAudio } from '../utils/cyberAudioEngine';
 import { searchYouTubeVideos } from '../services/youtubeService';
 import { searchSpotifyTracks, getSpotifyEmbedUrl } from '../services/spotifyService';
 import { SpotifyPlayerModal } from './SpotifyPlayerModal';
+import { SpotifyImportModal } from './SpotifyImportModal';
 import { AndroidHomeScreen } from './AndroidHomeScreen';
 import { SettingsView } from './SettingsView';
 import { LikedSongsView } from './LikedSongsView';
+import { ListeningStatsView } from './ListeningStatsView';
+import { SubscriptionModal } from './SubscriptionModal';
 import { SectionDetailView, SectionDetailConfig } from './SectionDetailView';
 
 interface CyberPulseAppProps {
@@ -100,6 +104,13 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
   const [currentScreen, setCurrentScreen] = useState<ScreenType>(
     preferences.isOnboardingCompleted ? 'home' : 'onboarding'
   );
+  const [displayName, setDisplayName] = useState<string>(() => {
+    return localStorage.getItem('sona_display_name') || 'Sona Listener';
+  });
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
+  const [isProUser, setIsProUser] = useState<boolean>(() => {
+    return localStorage.getItem('sona_is_pro') === 'true';
+  });
   const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
@@ -122,6 +133,50 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
 
   // Music State
   const [tracks, setTracks] = useState<Track[]>(DEMO_TRACKS);
+
+  // Playlists State with LocalStorage Persistence for Spotify imports
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+    try {
+      const saved = localStorage.getItem('sona_custom_playlists');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const existingIds = new Set(parsed.map((p: any) => p.id));
+          return [...parsed, ...DEMO_PLAYLISTS.filter((p) => !existingIds.has(p.id))];
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return DEMO_PLAYLISTS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sona_custom_playlists', JSON.stringify(playlists));
+    } catch {
+      // ignore
+    }
+  }, [playlists]);
+
+  const [isSpotifyImportOpen, setIsSpotifyImportOpen] = useState<boolean>(false);
+  const [spotifyImportToast, setSpotifyImportToast] = useState<string | null>(null);
+
+  const handlePlaylistImported = (importedPlaylist: Playlist) => {
+    setPlaylists((prev) => [importedPlaylist, ...prev.filter((p) => p.id !== importedPlaylist.id)]);
+    if (importedPlaylist.tracks && importedPlaylist.tracks.length > 0) {
+      setTracks((prev) => {
+        const existingIds = new Set(prev.map((t) => t.id));
+        const newOnes = importedPlaylist.tracks!.filter((t) => !existingIds.has(t.id));
+        return [...newOnes, ...prev];
+      });
+    }
+    setSelectedPlaylistId(importedPlaylist.id);
+    setCurrentScreen('playlist_detail');
+    setSpotifyImportToast(`Playlist "${importedPlaylist.title}" was successfully imported from Spotify!`);
+    setTimeout(() => setSpotifyImportToast(null), 4500);
+  };
+
   const [currentTrack, setCurrentTrack] = useState<Track>(DEMO_TRACKS[0]);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [seekSeconds, setSeekSeconds] = useState<number>(0);
@@ -155,7 +210,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
   // Unified audio/video stream is active so audio is never stopped or restarted when toggling modes
   const isYouTubeActive = true;
 
-  // Fungsi hantar arahan terus ke iframe YouTube
+  // Send command directly to YouTube iframe
   const sendYTCommand = (func: string, args: any[] = []) => {
     if (ytIframeRef.current && ytIframeRef.current.contentWindow) {
       try {
@@ -173,13 +228,15 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
     }
   };
 
-  // Butang Play/Pause kontekstual: mengawal video YouTube dan audio Spotify/tempatan
+  // Play/Pause contextual controller for streaming player
   const togglePlayPause = () => {
     if (isYouTubeActive) {
       if (isPlaying) {
         sendYTCommand('pauseVideo');
         setIsPlaying(false);
       } else {
+        sendYTCommand('setPlaybackQuality', ['medium']);
+        sendYTCommand('setPlaybackQualityRange', ['small', 'medium']);
         sendYTCommand('playVideo');
         setIsPlaying(true);
       }
@@ -188,7 +245,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
     }
   };
 
-  // Kawalan Slider Seekbar
+  // Seekbar control
   const handleSeek = (newSeconds: number) => {
     setSeekSeconds(newSeconds);
     if (isYouTubeActive) {
@@ -204,10 +261,17 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
       if (!event.data) return;
       try {
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data.event === 'onReady') {
+          // Enforce 360p or 480p stream quality immediately on load for ultra-fast switching
+          sendYTCommand('setPlaybackQuality', ['medium']);
+          sendYTCommand('setPlaybackQualityRange', ['small', 'medium']);
+        }
         if (data.event === 'onStateChange') {
           // 1: PLAYING, 2: PAUSED, 0: ENDED
           if (data.info === 1) {
             setIsPlaying(true);
+            sendYTCommand('setPlaybackQuality', ['medium']);
+            sendYTCommand('setPlaybackQualityRange', ['small', 'medium']);
           } else if (data.info === 2) {
             setIsPlaying(false);
           } else if (data.info === 0) {
@@ -603,21 +667,26 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
     : [];
 
   const filteredPlaylists = searchQuery.trim()
-    ? (DEMO_PLAYLISTS || []).filter(
+    ? (playlists || []).filter(
         (p) =>
           p?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p?.description?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
 
-  const isDarkOled = preferences.theme === 'oled';
-  const isSporty = preferences.theme === 'sporty';
-  const bgColor = isDarkOled ? 'bg-[#000000]' : isSporty ? 'bg-[#090D13]' : 'bg-[#07090F]';
-  const cardBgColor = isDarkOled
-    ? 'bg-[#0C0C0C]'
-    : isSporty
-    ? 'bg-[#101722]/90 backdrop-blur-xl border border-[#B8FF2C]/30'
-    : 'bg-[#10131C]/90 backdrop-blur-xl border border-[#171B28]';
+  const isLight = preferences.theme === 'pure_light';
+  const nrcAccent = preferences.nrcAccent || 'neon_green';
+  const nrcAccentHex =
+    nrcAccent === 'purple_magic'
+      ? '#B026FF'
+      : nrcAccent === 'electric_blue'
+      ? '#00E5FF'
+      : '#CCFF00';
+
+  const bgColor = isLight ? 'bg-white' : 'bg-[#000000]';
+  const cardBgColor = isLight
+    ? 'bg-slate-50 border border-slate-200'
+    : 'bg-[#121214] border border-[#242428]';
 
   // Navigation Items
   const navItems = [
@@ -646,8 +715,20 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
     <div className={`relative w-full h-full flex flex-col ${bgColor} text-[#F7F8FC] select-none overflow-hidden font-sans`}>
       {/* Ambient Lighting Orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className={`absolute top-[-10%] left-[-5%] w-[400px] h-[400px] ${isSporty ? 'bg-[#B8FF2C]' : 'bg-[#8B5CFF]'} opacity-10 rounded-full blur-[120px]`} />
-        <div className={`absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] ${isSporty ? 'bg-[#FF5E3A]' : 'bg-[#00F5FF]'} opacity-10 rounded-full blur-[150px]`} />
+        <div
+          className="absolute top-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full blur-[120px]"
+          style={{
+            backgroundColor: isLight ? '#0ea5e9' : nrcAccentHex,
+            opacity: isLight ? 0.04 : 0.08,
+          }}
+        />
+        <div
+          className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full blur-[150px]"
+          style={{
+            backgroundColor: isLight ? '#6366f1' : nrcAccentHex,
+            opacity: isLight ? 0.04 : 0.08,
+          }}
+        />
       </div>
 
       {/* Main App Canvas (with optional Tablet NavRail) */}
@@ -840,7 +921,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                   <div>
                     <h2 className="text-2xl font-black uppercase text-[#F7F8FC] mb-2">Personalization</h2>
                     <p className="text-sm text-[#9CA3B7] leading-relaxed mb-8">
-                      “CyberPulse will use your listening activity to improve recommendations.”
+                      “Sona will use your listening activity to improve recommendations.”
                     </p>
                     <div className="p-4 rounded-2xl border border-[#171B28] bg-[#10131C]/90 backdrop-blur-xl flex items-center justify-between">
                       <div>
@@ -915,13 +996,13 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                   </div>
                   <h2 className="text-3xl font-black uppercase text-[#F7F8FC] mb-2">You're ready.</h2>
                   <p className="text-sm text-[#9CA3B7] max-w-xs mb-8">
-                    Your CyberPulse engine is calibrated. Immerse into the frequency of sound.
+                    Your Sona engine is calibrated. Immerse into the frequency of sound.
                   </p>
                   <button
                     onClick={handleFinishOnboarding}
                     className="w-full py-3.5 rounded-2xl bg-[#00F5FF] text-[#07090F] font-black uppercase tracking-wider text-xs shadow-lg shadow-[#00F5FF]/30 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <span>Enter CyberPulse</span>
+                    <span>Enter Sona</span>
                     <Sparkles className="w-4 h-4" />
                   </button>
                 </div>
@@ -1108,23 +1189,33 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-base sm:text-lg font-bold tracking-tight text-[#F7F8FC] uppercase">Made For You</h3>
-                  <span
-                    onClick={() =>
-                      handleOpenSection({
-                        title: 'Made For You',
-                        subtitle: 'Personalized cyber mixes and curated tracklists',
-                        type: 'playlists',
-                        items: DEMO_PLAYLISTS,
-                        badgeText: 'Curated Mixes'
-                      })
-                    }
-                    className="text-[#00F5FF] text-xs font-bold uppercase tracking-wider cursor-pointer hover:underline"
-                  >
-                    Explore
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsSpotifyImportOpen(true)}
+                      className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-inherit flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Import playlist dari Spotify"
+                    >
+                      <Music2 className="w-3 h-3" />
+                      <span>+ Spotify</span>
+                    </button>
+                    <span
+                      onClick={() =>
+                        handleOpenSection({
+                          title: 'Made For You',
+                          subtitle: 'Personalized mixes and curated tracklists',
+                          type: 'playlists',
+                          items: playlists,
+                          badgeText: 'Curated Mixes'
+                        })
+                      }
+                      className="text-[#00F5FF] text-xs font-bold uppercase tracking-wider cursor-pointer hover:underline"
+                    >
+                      Explore
+                    </span>
+                  </div>
                 </div>
                 <div className="flex gap-3.5 overflow-x-auto pb-1 no-scrollbar">
-                  {DEMO_PLAYLISTS.slice(0, 4).map((pl) => (
+                  {playlists.slice(0, 6).map((pl) => (
                     <div
                       key={pl.id}
                       onClick={() => {
@@ -1138,6 +1229,11 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                         <div className="absolute bottom-2 left-2 bg-[#10131C]/80 backdrop-blur-md px-2 py-0.5 rounded border border-[#171B28] text-[9px] font-bold text-[#F7F8FC] uppercase tracking-wider">
                           {pl.trackCount} tracks
                         </div>
+                        {pl.source === 'SPOTIFY' && (
+                          <div className="absolute top-2 right-2 bg-emerald-500 text-black text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full shadow">
+                            Spotify
+                          </div>
+                        )}
                       </div>
                       <div className="text-xs font-bold truncate text-[#F7F8FC]">{pl.title}</div>
                       <div className="text-[10px] text-[#9CA3B7] line-clamp-1">{pl.description}</div>
@@ -1248,7 +1344,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                         title: 'Your Mixes',
                         subtitle: 'Continuous flow algorithmic mixes curated for cyber pulses',
                         type: 'playlists',
-                        items: DEMO_PLAYLISTS,
+                        items: playlists,
                         badgeText: 'Audio Mixes'
                       })
                     }
@@ -1258,7 +1354,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                   </span>
                 </div>
                 <div className="flex gap-3.5 overflow-x-auto pb-1 no-scrollbar">
-                  {DEMO_PLAYLISTS.map((pl) => (
+                  {playlists.map((pl) => (
                     <div
                       key={`mix-${pl.id}`}
                       onClick={() => {
@@ -1269,9 +1365,14 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                     >
                       <div className="aspect-square rounded-xl bg-[#171B28] border border-[#171B28] group-hover:border-[#00F5FF]/50 overflow-hidden relative shadow-lg shadow-black/40 transition-all">
                         <CyberArtwork keyName={pl.artworkKey} artworkUrl={pl.artworkUrl} title={pl.title} />
+                        {pl.source === 'SPOTIFY' && (
+                          <div className="absolute top-2 right-2 bg-emerald-500 text-black text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full shadow">
+                            Spotify
+                          </div>
+                        )}
                       </div>
                       <div className="text-xs font-bold truncate text-[#F7F8FC]">{pl.title}</div>
-                      <div className="text-[10px] text-[#9CA3B7] uppercase tracking-tighter truncate">Curated Mix</div>
+                      <div className="text-[10px] text-[#9CA3B7] uppercase tracking-tighter truncate">{pl.createdBy || 'Curated Mix'}</div>
                     </div>
                   ))}
                 </div>
@@ -1999,24 +2100,39 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
               {/* Your Playlists */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#9CA3B7]">Your Playlists</h2>
-                  <span
-                    onClick={() =>
-                      handleOpenSection({
-                        title: 'Your Playlists',
-                        subtitle: 'All curated mixes and user playlists in your cyber library',
-                        type: 'playlists',
-                        items: DEMO_PLAYLISTS,
-                        badgeText: 'Library Playlists'
-                      })
-                    }
-                    className="text-[#00F5FF] text-xs font-bold uppercase tracking-wider cursor-pointer hover:underline"
-                  >
-                    See All
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-[#9CA3B7]">Your Playlists</h2>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full border border-inherit font-mono">
+                      {playlists.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsSpotifyImportOpen(true)}
+                      className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-inherit cursor-pointer transition-colors hover:brightness-110"
+                      title="Import Playlist dari Spotify"
+                    >
+                      <Music2 className="w-3 h-3 text-emerald-500" />
+                      <span>Import Spotify</span>
+                    </button>
+                    <span
+                      onClick={() =>
+                        handleOpenSection({
+                          title: 'Your Playlists',
+                          subtitle: 'All curated mixes and user playlists in your cyber library',
+                          type: 'playlists',
+                          items: playlists,
+                          badgeText: 'Library Playlists'
+                        })
+                      }
+                      className="text-[#00F5FF] text-xs font-bold uppercase tracking-wider cursor-pointer hover:underline"
+                    >
+                      See All
+                    </span>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  {DEMO_PLAYLISTS.map((pl) => (
+                  {playlists.map((pl) => (
                     <div
                       key={pl.id}
                       onClick={() => {
@@ -2025,12 +2141,24 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                       }}
                       className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#10131C]/80 border border-transparent hover:border-[#171B28] cursor-pointer transition-colors"
                     >
-                      <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-[#171B28]">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-[#171B28] relative bg-slate-900">
                         <CyberArtwork keyName={pl.artworkKey} artworkUrl={pl.artworkUrl} title={pl.title} />
+                        {pl.source === 'SPOTIFY' && (
+                          <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-black shadow" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-[#F7F8FC] truncate">{pl.title}</div>
-                        <div className="text-[11px] text-[#9CA3B7]">Playlist • {pl.trackCount} songs</div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="text-xs font-bold text-[#F7F8FC] truncate">{pl.title}</div>
+                          {pl.source === 'SPOTIFY' && (
+                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-500 shrink-0">
+                              Spotify
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-[#9CA3B7]">
+                          {pl.createdBy || 'Playlist'} • {pl.trackCount} songs
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -2064,13 +2192,16 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                 <div className="flex items-center gap-3.5">
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#00F5FF] via-[#8B5CFF] to-[#FF2ED1] p-[2px] shadow-lg shadow-[#00F5FF]/20">
                     <div className="w-full h-full rounded-full bg-[#07090F] flex items-center justify-center font-black text-[#00F5FF] text-lg">
-                      CL
+                      {displayName.substring(0, 2).toUpperCase()}
                     </div>
                   </div>
                   <div>
-                    <div className="text-base font-black uppercase text-[#F7F8FC]">{DEFAULT_PROFILE.username}</div>
+                    <div className="text-base font-black uppercase text-[#F7F8FC]">{displayName}</div>
                     <div className="text-xs text-[#9CA3B7]">
-                      {DEFAULT_PROFILE.handle} • <span className="text-[#00F5FF] font-bold">Free Plan</span>
+                      @sona_listener •{' '}
+                      <span className={`font-bold ${isProUser ? 'text-[#FF2ED1]' : 'text-[#00F5FF]'}`}>
+                        {isProUser ? 'Sona Pro' : 'Free Plan'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2078,7 +2209,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                 {/* Stats Row */}
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#171B28] text-center">
                   <div>
-                    <div className="text-sm font-black text-[#F7F8FC]">0</div>
+                    <div className="text-sm font-black text-[#F7F8FC]">{(DEMO_PLAYLISTS || []).length}</div>
                     <div className="text-[10px] text-[#9CA3B7] uppercase tracking-wider">Playlists</div>
                   </div>
                   <div>
@@ -2086,8 +2217,8 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                     <div className="text-[10px] text-[#9CA3B7] uppercase tracking-wider">Liked Songs</div>
                   </div>
                   <div>
-                    <div className="text-sm font-black text-[#F7F8FC]">0</div>
-                    <div className="text-[10px] text-[#9CA3B7] uppercase tracking-wider">Following</div>
+                    <div className="text-sm font-black text-[#F7F8FC]">{(DEMO_ARTISTS || []).length}</div>
+                    <div className="text-[10px] text-[#9CA3B7] uppercase tracking-wider">Artists</div>
                   </div>
                 </div>
               </div>
@@ -2096,12 +2227,10 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
               <div className="space-y-1">
                 <div className="text-xs font-bold uppercase tracking-wider text-[#9CA3B7] mb-2">Preferences & System</div>
                 {[
-                  { label: 'Account & Subscription', action: () => setCurrentScreen('settings') },
-                  { label: 'Listening Stats & Liked Collection', action: () => setCurrentScreen('liked_songs') },
-                  { label: 'Appearance & Themes (Sporty, OLED, Frosted)', action: () => setCurrentScreen('settings') },
+                  { label: 'Account & Subscription', action: () => setIsSubscriptionModalOpen(true) },
+                  { label: 'Listening Stats & Trends', action: () => setCurrentScreen('listening_stats') },
+                  { label: 'Appearance & Themes', action: () => setCurrentScreen('settings') },
                   { label: 'Audio Engine & DSP Preferences', action: () => setCurrentScreen('settings') },
-                  { label: 'Google AdMob Configuration', action: () => setCurrentScreen('settings') },
-                  { label: 'Notifications & Cache', action: () => setCurrentScreen('settings') },
                   { label: 'Liked Songs Collection', action: () => setCurrentScreen('liked_songs') },
                   { label: 'All Settings', action: () => setCurrentScreen('settings') },
                 ].map((item) => (
@@ -2122,8 +2251,25 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           {currentScreen === 'settings' && (
             <SettingsView
               preferences={preferences}
+              userName={displayName}
+              isProUser={isProUser}
               onUpdatePreferences={onUpdatePreferences}
+              onUpdateUserName={(newName) => {
+                setDisplayName(newName);
+                localStorage.setItem('sona_display_name', newName);
+              }}
+              onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
               onBack={() => setCurrentScreen('profile')}
+            />
+          )}
+
+          {/* SCREEN: LISTENING STATS */}
+          {currentScreen === 'listening_stats' && (
+            <ListeningStatsView
+              tracks={tracks}
+              theme={preferences.theme}
+              onBack={() => setCurrentScreen('profile')}
+              onSelectTrack={handleSelectTrack}
             />
           )}
 
@@ -2131,8 +2277,10 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           {currentScreen === 'liked_songs' && (
             <LikedSongsView
               tracks={tracks}
+              theme={preferences.theme}
               onSelectTrack={handleSelectTrack}
               onToggleLike={handleToggleLike}
+              onPlayViaYouTube={handlePlaySpotifyTrackViaYouTube}
               onBack={() => setCurrentScreen('library')}
             />
           )}
@@ -2178,12 +2326,14 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           {/* SCREEN: PLAYLIST DETAIL */}
           {currentScreen === 'playlist_detail' && (
             (() => {
-              const playlist = DEMO_PLAYLISTS.find((p) => p.id === selectedPlaylistId) || DEMO_PLAYLISTS[0];
+              const playlist = playlists.find((p) => p.id === selectedPlaylistId) || playlists[0] || DEMO_PLAYLISTS[0];
               return (
                 <PlaylistDetailView
                   playlist={playlist}
-                  onBack={() => setCurrentScreen('home')}
+                  onBack={() => setCurrentScreen(previousScreen || 'home')}
                   onSelectTrack={handleSelectTrack}
+                  theme={preferences.theme}
+                  nrcAccent={preferences.nrcAccent}
                 />
               );
             })()
@@ -2755,6 +2905,34 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
         onClose={() => setActiveSpotifyPlayerTrack(null)}
         onPlayViaYouTube={handlePlaySpotifyTrackViaYouTube}
       />
+
+      {/* Spotify Import Playlist Modal */}
+      <SpotifyImportModal
+        isOpen={isSpotifyImportOpen}
+        onClose={() => setIsSpotifyImportOpen(false)}
+        onPlaylistImported={handlePlaylistImported}
+        theme={preferences.theme}
+        nrcAccent={preferences.nrcAccent}
+      />
+
+      {/* Subscription & Pro Upgrade Modal */}
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+        isProUser={isProUser}
+        onUpgradeSuccess={() => {
+          setIsProUser(true);
+          localStorage.setItem('sona_is_pro', 'true');
+        }}
+      />
+
+      {/* Floating Toast for Import Notification */}
+      {spotifyImportToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold shadow-2xl flex items-center gap-2 border border-white/20">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>{spotifyImportToast}</span>
+        </div>
+      )}
     </div>
   );
 };

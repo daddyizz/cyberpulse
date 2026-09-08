@@ -88,6 +88,7 @@ export type ScreenType =
   | 'explore'
   | 'library'
   | 'liked_songs'
+  | 'listening_stats'
   | 'profile'
   | 'settings'
   | 'artist_detail'
@@ -97,10 +98,14 @@ export type ScreenType =
   | 'ai_playlist'
   | 'section_detail';
 
-export type CyberTheme = 'frosted' | 'sporty' | 'oled' | 'cyberpunk' | 'minimal';
+export type SonaTheme = 'pure_light' | 'stealth_athletic' | 'nike_run_club';
+export type CyberTheme = SonaTheme;
+export type AthleticAccentColor = 'neon_green' | 'purple_magic' | 'electric_blue';
+export type NrcAccentColor = AthleticAccentColor;
 
 export interface AppPreferences {
-  theme: CyberTheme;
+  theme: SonaTheme;
+  nrcAccent?: NrcAccentColor;
   reduceAnimations: boolean;
   dynamicBackgrounds: boolean;
   dataSaver: boolean;

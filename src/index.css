@@ -1,10 +1,22 @@
 @import "tailwindcss";
 
+:root {
+  --sona-bg: #FFFFFF;
+  --sona-surface: #F8FAFC;
+  --sona-card: #FFFFFF;
+  --sona-border: #E2E8F0;
+  --sona-text: #0F172A;
+  --sona-text-muted: #64748B;
+  --sona-accent: #0F172A;
+  --sona-accent-fg: #FFFFFF;
+  --sona-accent-glow: rgba(15, 23, 42, 0.12);
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #05070B;
-    color: #F7F8FC;
+    background-color: var(--sona-bg);
+    color: var(--sona-text);
     overflow-x: hidden;
   }
 }
@@ -14,108 +26,405 @@
   height: 6px;
 }
 
-::-webkit-scrollbar-track {
-  background: #07090F;
+/* =========================================================
+   THEME 1: SONA PURE LIGHT (Clean, Spotless White)
+   ========================================================= */
+html.theme-pure_light,
+html.cyber-theme-pure_light {
+  --sona-bg: #FFFFFF;
+  --sona-surface: #F8FAFC;
+  --sona-card: #FFFFFF;
+  --sona-border: #E2E8F0;
+  --sona-text: #0F172A;
+  --sona-text-muted: #64748B;
+  --sona-accent: #0F172A;
+  --sona-accent-fg: #FFFFFF;
+  --sona-accent-glow: rgba(15, 23, 42, 0.08);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #1F2436;
-  border-radius: 9999px;
+html.theme-pure_light body,
+html.theme-pure_light #root,
+html.cyber-theme-pure_light body,
+html.cyber-theme-pure_light #root {
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #00F5FF;
-}
-
-.cyber-settings-focus {
-  outline: 2px solid rgba(0, 245, 255, 0.65);
-  outline-offset: 4px;
-}
-
-/* Premium Light — clean white minimalist skin without changing app structure. */
-html.cyber-theme-minimal body,
-html.cyber-theme-minimal #root {
-  background: #eef2f7 !important;
-  color: #0f172a !important;
-}
-
-html.cyber-theme-minimal .cyber-global-ambient {
+html.theme-pure_light .cyber-global-ambient,
+html.cyber-theme-pure_light .cyber-global-ambient {
   display: none !important;
 }
 
-html.cyber-theme-minimal [class*="bg-[#07090F]"],
-html.cyber-theme-minimal [class*="bg-[#10131C]"],
-html.cyber-theme-minimal [class*="bg-[#0C0C0C]"],
-html.cyber-theme-minimal [class*="bg-[#0E131F]"],
-html.cyber-theme-minimal [class*="bg-[#0A0D17]"],
-html.cyber-theme-minimal [class*="bg-[#0D101C]"] {
-  background-color: rgba(255, 255, 255, 0.96) !important;
+/* Overriding old dark/cyber backgrounds to pristine light */
+html.theme-pure_light [class*="bg-[#07090F]"],
+html.theme-pure_light [class*="bg-[#090D13]"],
+html.theme-pure_light [class*="bg-[#000000]"],
+html.theme-pure_light [class*="bg-[#05070B]"],
+html.cyber-theme-pure_light [class*="bg-[#07090F]"],
+html.cyber-theme-pure_light [class*="bg-[#090D13]"],
+html.cyber-theme-pure_light [class*="bg-[#000000]"],
+html.cyber-theme-pure_light [class*="bg-[#05070B]"] {
+  background-color: #FFFFFF !important;
   background-image: none !important;
 }
 
-html.cyber-theme-minimal [class*="bg-[#171B28]"] {
-  background-color: #e8edf4 !important;
+html.theme-pure_light [class*="bg-[#10131C]"],
+html.theme-pure_light [class*="bg-[#0C0C0C]"],
+html.theme-pure_light [class*="bg-[#0E131F]"],
+html.theme-pure_light [class*="bg-[#0A0D17]"],
+html.theme-pure_light [class*="bg-[#0D101C]"],
+html.theme-pure_light [class*="bg-[#101722]"],
+html.cyber-theme-pure_light [class*="bg-[#10131C]"],
+html.cyber-theme-pure_light [class*="bg-[#0C0C0C]"],
+html.cyber-theme-pure_light [class*="bg-[#0E131F]"],
+html.cyber-theme-pure_light [class*="bg-[#0A0D17]"],
+html.cyber-theme-pure_light [class*="bg-[#0D101C]"],
+html.cyber-theme-pure_light [class*="bg-[#101722]"] {
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03) !important;
 }
 
-html.cyber-theme-minimal [class*="text-[#F7F8FC]"],
-html.cyber-theme-minimal [class*="text-white"] {
-  color: #0f172a !important;
+html.theme-pure_light [class*="bg-[#171B28]"],
+html.cyber-theme-pure_light [class*="bg-[#171B28]"] {
+  background-color: #F1F5F9 !important;
+  background-image: none !important;
 }
 
-html.cyber-theme-minimal [class*="text-[#9CA3B7]"],
-html.cyber-theme-minimal [class*="text-[#61697C]"] {
-  color: #64748b !important;
+/* Typography in Pure Light */
+html.theme-pure_light [class*="text-[#F7F8FC]"],
+html.theme-pure_light [class*="text-white"],
+html.cyber-theme-pure_light [class*="text-[#F7F8FC]"],
+html.cyber-theme-pure_light [class*="text-white"] {
+  color: #0F172A !important;
 }
 
-html.cyber-theme-minimal [class*="text-[#00F5FF]"] {
-  color: #2563eb !important;
+html.theme-pure_light [class*="text-[#9CA3B7]"],
+html.theme-pure_light [class*="text-[#61697C]"],
+html.cyber-theme-pure_light [class*="text-[#9CA3B7]"],
+html.cyber-theme-pure_light [class*="text-[#61697C]"] {
+  color: #64748B !important;
 }
 
-html.cyber-theme-minimal [class*="bg-[#00F5FF]"] {
-  background-color: #2563eb !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
+/* Neutralizing old neon colors in Pure Light */
+html.theme-pure_light [class*="text-[#00F5FF]"],
+html.theme-pure_light [class*="text-[#FF2ED1]"],
+html.theme-pure_light [class*="text-[#B8FF2C]"],
+html.cyber-theme-pure_light [class*="text-[#00F5FF]"],
+html.cyber-theme-pure_light [class*="text-[#FF2ED1]"],
+html.cyber-theme-pure_light [class*="text-[#B8FF2C]"] {
+  color: #0F172A !important;
 }
 
-html.cyber-theme-minimal [class*="border-[#171B28]"] {
-  border-color: #dbe3ed !important;
+html.theme-pure_light [class*="bg-[#00F5FF]"],
+html.theme-pure_light [class*="bg-[#FF2ED1]"],
+html.theme-pure_light [class*="bg-[#B8FF2C]"],
+html.cyber-theme-pure_light [class*="bg-[#00F5FF]"],
+html.cyber-theme-pure_light [class*="bg-[#FF2ED1]"],
+html.cyber-theme-pure_light [class*="bg-[#B8FF2C]"] {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15) !important;
 }
 
-html.cyber-theme-minimal [class*="border-[#00F5FF]"] {
-  border-color: rgba(37, 99, 235, 0.42) !important;
+/* Borders in Pure Light */
+html.theme-pure_light [class*="border-[#171B28]"],
+html.cyber-theme-pure_light [class*="border-[#171B28]"] {
+  border-color: #E2E8F0 !important;
 }
 
-html.cyber-theme-minimal [class*="shadow-[#00F5FF]"],
-html.cyber-theme-minimal [class*="shadow-black"] {
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08) !important;
+html.theme-pure_light [class*="border-[#00F5FF]"],
+html.theme-pure_light [class*="border-[#FF2ED1]"],
+html.theme-pure_light [class*="border-[#B8FF2C]"],
+html.cyber-theme-pure_light [class*="border-[#00F5FF]"],
+html.cyber-theme-pure_light [class*="border-[#FF2ED1]"],
+html.cyber-theme-pure_light [class*="border-[#B8FF2C]"] {
+  border-color: #CBD5E1 !important;
 }
 
-html.cyber-theme-minimal [class*="backdrop-blur"] {
-  backdrop-filter: blur(18px);
+html.theme-pure_light [class*="shadow-[#00F5FF]"],
+html.theme-pure_light [class*="shadow-[#FF2ED1]"],
+html.theme-pure_light [class*="shadow-[#B8FF2C]"],
+html.cyber-theme-pure_light [class*="shadow-[#00F5FF]"],
+html.cyber-theme-pure_light [class*="shadow-[#FF2ED1]"],
+html.cyber-theme-pure_light [class*="shadow-[#B8FF2C]"] {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
 }
 
-html.cyber-theme-minimal input,
-html.cyber-theme-minimal textarea,
-html.cyber-theme-minimal select {
-  color: #0f172a !important;
+/* Switch toggle styling */
+.sona-toggle-active {
+  background-color: var(--sona-accent, #0F172A) !important;
+}
+.sona-toggle-inactive {
+  background-color: #CBD5E1 !important;
+}
+html.theme-stealth_athletic .sona-toggle-inactive,
+html.theme-nike_run_club .sona-toggle-inactive {
+  background-color: #27272A !important;
+}
+.sona-toggle-thumb {
+  background-color: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+}
+html.theme-stealth_athletic .sona-toggle-active .sona-toggle-thumb,
+html.theme-nike_run_club .sona-toggle-active .sona-toggle-thumb {
+  background-color: #000000 !important;
 }
 
-html.cyber-theme-minimal input[type="range"] {
-  accent-color: #2563eb !important;
+html.theme-pure_light input,
+html.theme-pure_light textarea,
+html.theme-pure_light select,
+html.cyber-theme-pure_light input,
+html.cyber-theme-pure_light textarea,
+html.cyber-theme-pure_light select {
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
+  border-color: #E2E8F0 !important;
 }
 
-html.cyber-theme-minimal ::-webkit-scrollbar-track {
-  background: #f8fafc;
+html.theme-pure_light input[type="range"],
+html.cyber-theme-pure_light input[type="range"] {
+  accent-color: #0F172A !important;
 }
 
-html.cyber-theme-minimal ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+html.theme-pure_light ::-webkit-scrollbar-track,
+html.cyber-theme-pure_light ::-webkit-scrollbar-track {
+  background: #F8FAFC;
 }
 
-html.cyber-theme-minimal ::-webkit-scrollbar-thumb:hover {
-  background: #2563eb;
+html.theme-pure_light ::-webkit-scrollbar-thumb,
+html.cyber-theme-pure_light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
 }
 
-html.cyber-theme-minimal .cyber-settings-focus {
-  outline-color: rgba(37, 99, 235, 0.55);
+html.theme-pure_light ::-webkit-scrollbar-thumb:hover,
+html.cyber-theme-pure_light ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* =========================================================
+   THEME 2: STEALTH ATHLETIC DARK (Deep Stealth with Dynamic Accent)
+   ========================================================= */
+html.theme-stealth_athletic,
+html.cyber-theme-stealth_athletic,
+html.theme-nike_run_club,
+html.cyber-theme-nike_run_club {
+  --sona-bg: #000000;
+  --sona-surface: #0C0C0D;
+  --sona-card: #141416;
+  --sona-border: #242428;
+  --sona-text: #FFFFFF;
+  --sona-text-muted: #8E8E93;
+  --sona-accent: #CCFF00; /* default Volt */
+  --sona-accent-fg: #000000;
+  --sona-accent-glow: rgba(204, 255, 0, 0.35);
+}
+
+/* Accent Variant 1: Neon Green (Volt) */
+html.accent-neon_green,
+html[data-nrc-accent="neon_green"] {
+  --sona-accent: #CCFF00 !important;
+  --sona-accent-fg: #000000 !important;
+  --sona-accent-glow: rgba(204, 255, 0, 0.4) !important;
+}
+
+/* Accent Variant 2: Purple Magic */
+html.accent-purple_magic,
+html[data-nrc-accent="purple_magic"] {
+  --sona-accent: #B026FF !important;
+  --sona-accent-fg: #FFFFFF !important;
+  --sona-accent-glow: rgba(176, 38, 255, 0.45) !important;
+}
+
+/* Accent Variant 3: Electric Blue */
+html.accent-electric_blue,
+html[data-nrc-accent="electric_blue"] {
+  --sona-accent: #00E5FF !important;
+  --sona-accent-fg: #000000 !important;
+  --sona-accent-glow: rgba(0, 229, 255, 0.45) !important;
+}
+
+html.theme-stealth_athletic body,
+html.theme-stealth_athletic #root,
+html.cyber-theme-stealth_athletic body,
+html.cyber-theme-stealth_athletic #root,
+html.theme-nike_run_club body,
+html.theme-nike_run_club #root,
+html.cyber-theme-nike_run_club body,
+html.cyber-theme-nike_run_club #root {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+/* Athletic Dark Containers */
+html.theme-stealth_athletic [class*="bg-[#07090F]"],
+html.theme-stealth_athletic [class*="bg-[#05070B]"],
+html.theme-stealth_athletic [class*="bg-[#090D13]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#07090F]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#05070B]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#090D13]"],
+html.theme-nike_run_club [class*="bg-[#07090F]"],
+html.theme-nike_run_club [class*="bg-[#05070B]"],
+html.theme-nike_run_club [class*="bg-[#090D13]"],
+html.cyber-theme-nike_run_club [class*="bg-[#07090F]"],
+html.cyber-theme-nike_run_club [class*="bg-[#05070B]"],
+html.cyber-theme-nike_run_club [class*="bg-[#090D13]"] {
+  background-color: #000000 !important;
+}
+
+html.theme-stealth_athletic [class*="bg-[#10131C]"],
+html.theme-stealth_athletic [class*="bg-[#0C0C0C]"],
+html.theme-stealth_athletic [class*="bg-[#0E131F]"],
+html.theme-stealth_athletic [class*="bg-[#0A0D17]"],
+html.theme-stealth_athletic [class*="bg-[#0D101C]"],
+html.theme-stealth_athletic [class*="bg-[#101722]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#10131C]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#0C0C0C]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#0E131F]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#0A0D17]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#0D101C]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#101722]"],
+html.theme-nike_run_club [class*="bg-[#10131C]"],
+html.theme-nike_run_club [class*="bg-[#0C0C0C]"],
+html.theme-nike_run_club [class*="bg-[#0E131F]"],
+html.theme-nike_run_club [class*="bg-[#0A0D17]"],
+html.theme-nike_run_club [class*="bg-[#0D101C]"],
+html.theme-nike_run_club [class*="bg-[#101722]"],
+html.cyber-theme-nike_run_club [class*="bg-[#10131C]"],
+html.cyber-theme-nike_run_club [class*="bg-[#0C0C0C]"],
+html.cyber-theme-nike_run_club [class*="bg-[#0E131F]"],
+html.cyber-theme-nike_run_club [class*="bg-[#0A0D17]"],
+html.cyber-theme-nike_run_club [class*="bg-[#0D101C]"],
+html.cyber-theme-nike_run_club [class*="bg-[#101722]"] {
+  background-color: #141416 !important;
+}
+
+html.theme-stealth_athletic [class*="bg-[#171B28]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#171B28]"],
+html.theme-nike_run_club [class*="bg-[#171B28]"],
+html.cyber-theme-nike_run_club [class*="bg-[#171B28]"] {
+  background-color: #1C1C20 !important;
+}
+
+/* Athletic Dark Typography */
+html.theme-stealth_athletic [class*="text-[#F7F8FC]"],
+html.cyber-theme-stealth_athletic [class*="text-[#F7F8FC]"],
+html.theme-nike_run_club [class*="text-[#F7F8FC]"],
+html.cyber-theme-nike_run_club [class*="text-[#F7F8FC]"] {
+  color: #FFFFFF !important;
+}
+
+html.theme-stealth_athletic [class*="text-[#9CA3B7]"],
+html.cyber-theme-stealth_athletic [class*="text-[#9CA3B7]"],
+html.theme-nike_run_club [class*="text-[#9CA3B7]"],
+html.cyber-theme-nike_run_club [class*="text-[#9CA3B7]"] {
+  color: #8E8E93 !important;
+}
+
+html.theme-stealth_athletic [class*="text-[#61697C]"],
+html.cyber-theme-stealth_athletic [class*="text-[#61697C]"],
+html.theme-nike_run_club [class*="text-[#61697C]"],
+html.cyber-theme-nike_run_club [class*="text-[#61697C]"] {
+  color: #636366 !important;
+}
+
+/* Athletic Dynamic Accent mapping */
+html.theme-stealth_athletic [class*="text-[#00F5FF]"],
+html.theme-stealth_athletic [class*="text-[#FF2ED1]"],
+html.theme-stealth_athletic [class*="text-[#B8FF2C]"],
+html.cyber-theme-stealth_athletic [class*="text-[#00F5FF]"],
+html.cyber-theme-stealth_athletic [class*="text-[#FF2ED1]"],
+html.cyber-theme-stealth_athletic [class*="text-[#B8FF2C]"],
+html.theme-nike_run_club [class*="text-[#00F5FF]"],
+html.theme-nike_run_club [class*="text-[#FF2ED1]"],
+html.theme-nike_run_club [class*="text-[#B8FF2C]"],
+html.cyber-theme-nike_run_club [class*="text-[#00F5FF]"],
+html.cyber-theme-nike_run_club [class*="text-[#FF2ED1]"],
+html.cyber-theme-nike_run_club [class*="text-[#B8FF2C]"] {
+  color: var(--sona-accent) !important;
+}
+
+html.theme-stealth_athletic [class*="bg-[#00F5FF]"],
+html.theme-stealth_athletic [class*="bg-[#FF2ED1]"],
+html.theme-stealth_athletic [class*="bg-[#B8FF2C]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#00F5FF]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#FF2ED1]"],
+html.cyber-theme-stealth_athletic [class*="bg-[#B8FF2C]"],
+html.theme-nike_run_club [class*="bg-[#00F5FF]"],
+html.theme-nike_run_club [class*="bg-[#FF2ED1]"],
+html.theme-nike_run_club [class*="bg-[#B8FF2C]"],
+html.cyber-theme-nike_run_club [class*="bg-[#00F5FF]"],
+html.cyber-theme-nike_run_club [class*="bg-[#FF2ED1]"],
+html.cyber-theme-nike_run_club [class*="bg-[#B8FF2C]"] {
+  background-color: var(--sona-accent) !important;
+  color: var(--sona-accent-fg) !important;
+  box-shadow: 0 4px 16px var(--sona-accent-glow) !important;
+}
+
+/* Athletic Borders */
+html.theme-stealth_athletic [class*="border-[#171B28]"],
+html.cyber-theme-stealth_athletic [class*="border-[#171B28]"],
+html.theme-nike_run_club [class*="border-[#171B28]"],
+html.cyber-theme-nike_run_club [class*="border-[#171B28]"] {
+  border-color: #242428 !important;
+}
+
+html.theme-stealth_athletic [class*="border-[#00F5FF]"],
+html.theme-stealth_athletic [class*="border-[#FF2ED1]"],
+html.theme-stealth_athletic [class*="border-[#B8FF2C]"],
+html.cyber-theme-stealth_athletic [class*="border-[#00F5FF]"],
+html.cyber-theme-stealth_athletic [class*="border-[#FF2ED1]"],
+html.cyber-theme-stealth_athletic [class*="border-[#B8FF2C]"],
+html.theme-nike_run_club [class*="border-[#00F5FF]"],
+html.theme-nike_run_club [class*="border-[#FF2ED1]"],
+html.theme-nike_run_club [class*="border-[#B8FF2C]"],
+html.cyber-theme-nike_run_club [class*="border-[#00F5FF]"],
+html.cyber-theme-nike_run_club [class*="border-[#FF2ED1]"],
+html.cyber-theme-nike_run_club [class*="border-[#B8FF2C]"] {
+  border-color: var(--sona-accent) !important;
+}
+
+html.theme-stealth_athletic [class*="shadow-[#00F5FF]"],
+html.theme-stealth_athletic [class*="shadow-[#FF2ED1]"],
+html.theme-stealth_athletic [class*="shadow-[#B8FF2C]"],
+html.cyber-theme-stealth_athletic [class*="shadow-[#00F5FF]"],
+html.cyber-theme-stealth_athletic [class*="shadow-[#FF2ED1]"],
+html.cyber-theme-stealth_athletic [class*="shadow-[#B8FF2C]"],
+html.theme-nike_run_club [class*="shadow-[#00F5FF]"],
+html.theme-nike_run_club [class*="shadow-[#FF2ED1]"],
+html.theme-nike_run_club [class*="shadow-[#B8FF2C]"],
+html.cyber-theme-nike_run_club [class*="shadow-[#00F5FF]"],
+html.cyber-theme-nike_run_club [class*="shadow-[#FF2ED1]"],
+html.cyber-theme-nike_run_club [class*="shadow-[#B8FF2C]"] {
+  box-shadow: 0 4px 16px var(--sona-accent-glow) !important;
+}
+
+html.theme-stealth_athletic input[type="range"],
+html.cyber-theme-stealth_athletic input[type="range"],
+html.theme-nike_run_club input[type="range"],
+html.cyber-theme-nike_run_club input[type="range"] {
+  accent-color: var(--sona-accent) !important;
+}
+
+html.theme-stealth_athletic ::-webkit-scrollbar-track,
+html.cyber-theme-stealth_athletic ::-webkit-scrollbar-track,
+html.theme-nike_run_club ::-webkit-scrollbar-track,
+html.cyber-theme-nike_run_club ::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+html.theme-stealth_athletic ::-webkit-scrollbar-thumb,
+html.cyber-theme-stealth_athletic ::-webkit-scrollbar-thumb,
+html.theme-nike_run_club ::-webkit-scrollbar-thumb,
+html.cyber-theme-nike_run_club ::-webkit-scrollbar-thumb {
+  background: #242428;
+  border-radius: 9999px;
+}
+
+html.theme-stealth_athletic ::-webkit-scrollbar-thumb:hover,
+html.cyber-theme-stealth_athletic ::-webkit-scrollbar-thumb:hover,
+html.theme-nike_run_club ::-webkit-scrollbar-thumb:hover,
+html.cyber-theme-nike_run_club ::-webkit-scrollbar-thumb:hover {
+  background: var(--sona-accent);
 }

@@ -205,6 +205,62 @@ function spotifyApiMiddleware(): Plugin {
         }
       });
 
+      server.middlewares.use('/api/spotify/playlist', async (req, res) => {
+        try {
+          const parsedUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost:3000'}`);
+          let playlistId = (parsedUrl.searchParams.get('id') || '').trim();
+
+          if (playlistId.includes('open.spotify.com/playlist/')) {
+            playlistId = playlistId.split('open.spotify.com/playlist/')[1].split('?')[0];
+          } else if (playlistId.startsWith('spotify:playlist:')) {
+            playlistId = playlistId.replace('spotify:playlist:', '');
+          }
+
+          if (!playlistId) {
+            return json(res, 400, { error: { message: 'Spotify playlist ID or URL is required' } });
+          }
+
+          try {
+            const { token } = await getSpotifyToken();
+            const spotifyResp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            if (spotifyResp.ok) {
+              const body = await spotifyResp.text();
+              res.setHeader('Content-Type', 'application/json');
+              res.statusCode = 200;
+              return res.end(body);
+            }
+          } catch {
+            // If token fails or credentials not configured, fallback to oEmbed
+          }
+
+          const oembedResp = await fetch(
+            `https://open.spotify.com/oembed?url=https://open.spotify.com/playlist/${playlistId}`
+          );
+          if (oembedResp.ok) {
+            const oembed = (await oembedResp.json()) as any;
+            return json(res, 200, {
+              id: playlistId,
+              name: oembed.title || 'Spotify Playlist',
+              description: `Imported Spotify Playlist • Curated by ${oembed.author_name || 'Spotify'}`,
+              images: oembed.thumbnail_url ? [{ url: oembed.thumbnail_url }] : [],
+              owner: { display_name: oembed.author_name || 'Spotify Curator' },
+              tracks: { items: [], total: 0 },
+              source: 'oembed',
+            });
+          }
+
+          json(res, 404, { error: { message: 'Spotify playlist could not be retrieved. Please check the URL or ID.' } });
+        } catch (err: any) {
+          console.error('[Spotify Playlist Proxy Error]:', err);
+          json(res, 500, { error: { message: err?.message || 'Failed to fetch Spotify playlist' } });
+        }
+      });
+
       server.middlewares.use('/api/spotify/artwork', async (req, res) => {
         try {
           const parsedUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost:3000'}`);

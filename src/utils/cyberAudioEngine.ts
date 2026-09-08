@@ -1,5 +1,5 @@
-// CyberPulse In-App Web Audio Engine
-// Provides reliable HTML5 audio stream playback with a zero-latency Web Audio API Cyber Synth fallback
+// Sona In-App Web Audio Engine
+// Provides reliable HTML5 audio stream playback with a zero-latency Web Audio API Synth fallback
 // Full MediaSession API integration for background playback, lock-screen controls, and notification tray
 
 export interface MediaSessionTrackInfo {
@@ -132,7 +132,7 @@ class CyberAudioEngine {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: track.title,
         artist: track.artist,
-        album: track.album || 'CyberPulse Music',
+        album: track.album || 'Sona Music',
         artwork: artworkItems,
       });
     } catch (e) {
@@ -186,7 +186,7 @@ class CyberAudioEngine {
     onEnded?: () => void
   ): Promise<void> {
     const info: MediaSessionTrackInfo = typeof trackInfo === 'string'
-      ? { title: trackInfo, artist: 'CyberPulse Artist' }
+      ? { title: trackInfo, artist: 'Sona Artist' }
       : trackInfo;
 
     this.currentTrackInfo = info;

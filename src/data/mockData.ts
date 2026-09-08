@@ -1198,7 +1198,7 @@ export const DEMO_PLAYLISTS: Playlist[] = [
     artworkKey: "neon_horizon",
     artworkUrl: "https://i.scdn.co/image/ab67616d0000b273d6d8c2eaa1f9031b62f7a3f7",
     trackCount: 6,
-    createdBy: "CyberPulse Editorial",
+    createdBy: "Sona Editorial",
     tracks: [DEMO_TRACKS[1], DEMO_TRACKS[0], DEMO_TRACKS[5], DEMO_TRACKS[12], DEMO_TRACKS[13], DEMO_TRACKS[7]]
   },
   {
@@ -1209,7 +1209,7 @@ export const DEMO_PLAYLISTS: Playlist[] = [
     artworkKey: "purple_pulse",
     artworkUrl: "https://i.scdn.co/image/ab67616d0000b2731e81bff9807a9e629fce5ade",
     trackCount: 8,
-    createdBy: "CyberPulse Dance",
+    createdBy: "Sona Dance",
     tracks: [DEMO_TRACKS[2], DEMO_TRACKS[23], DEMO_TRACKS[17], DEMO_TRACKS[8], DEMO_TRACKS[28], DEMO_TRACKS[20], DEMO_TRACKS[9], DEMO_TRACKS[3]]
   },
   {
@@ -1231,7 +1231,7 @@ export const DEMO_PLAYLISTS: Playlist[] = [
     artworkKey: "electric_dream",
     artworkUrl: "https://i.scdn.co/image/ab67616d0000b2735675e83f707f1d7271e5cf8a",
     trackCount: 6,
-    createdBy: "CyberPulse Fitness",
+    createdBy: "Sona Fitness",
     tracks: [DEMO_TRACKS[6], DEMO_TRACKS[23], DEMO_TRACKS[9], DEMO_TRACKS[12], DEMO_TRACKS[2], DEMO_TRACKS[17]]
   },
   {
@@ -1290,9 +1290,9 @@ export const EXPLORE_MOODS = [
 
 export const DEFAULT_PROFILE: UserProfile = {
   id: "usr_001",
-  username: "Cyber Listener",
-  handle: "@cyberpulse_01",
-  subscriptionTier: "CyberPulse Ultra",
+  username: "Sona Listener",
+  handle: "@sona_listener",
+  subscriptionTier: "Sona Ultra",
   playlistCount: 6,
   likedSongsCount: 42,
   followingCount: 38

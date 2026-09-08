@@ -188,7 +188,7 @@ function getLyricsForTrack(track: Track): LyricLine[] {
   }
   // Dynamic synchronized lyrics generator based on song title & artist
   const baseTitle = track.title || 'Music Stream';
-  const artistName = track.artist || 'CyberPulse Audio';
+  const artistName = track.artist || 'Sona Audio';
   return [
     { timeMs: 0, text: `♪ [Instrumental Intro: ${baseTitle}] ♪` },
     { timeMs: 8000, text: `Vocal harmonies by ${artistName}...` },

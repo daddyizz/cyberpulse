@@ -35,11 +35,11 @@ const ANDROID_FILES: FileNode[] = [
 }
 
 android {
-    namespace = "com.daddyizz.cyberpulse"
+    namespace = "com.daddyizz.sona"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.daddyizz.cyberpulse"
+        applicationId = "com.daddyizz.sona"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -85,7 +85,7 @@ dependencies {
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:name=".CyberPulseApplication"
+        android:name=".SonaApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -93,12 +93,12 @@ dependencies {
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CyberPulse.Splash">
+        android:theme="@style/Theme.Sona.Splash">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.CyberPulse.Splash"
+            android:theme="@style/Theme.Sona.Splash"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -109,12 +109,12 @@ dependencies {
 </manifest>`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/MainActivity.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/MainActivity.kt',
     name: 'MainActivity.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Main Activity Entry Point with Splash & Dynamic Theme',
-    content: `package com.daddyizz.cyberpulse
+    content: `package com.daddyizz.sona
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -127,11 +127,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
-import com.daddyizz.cyberpulse.core.data.MusicRepository
-import com.daddyizz.cyberpulse.core.data.UserPreferences
-import com.daddyizz.cyberpulse.core.data.UserPreferencesRepository
-import com.daddyizz.cyberpulse.core.designsystem.CyberPulseTheme
-import com.daddyizz.cyberpulse.core.navigation.CyberPulseNavHost
+import com.daddyizz.sona.core.data.MusicRepository
+import com.daddyizz.sona.core.data.UserPreferences
+import com.daddyizz.sona.core.data.UserPreferencesRepository
+import com.daddyizz.sona.core.designsystem.SonaTheme
+import com.daddyizz.sona.core.navigation.SonaNavHost
 
 class MainActivity : ComponentActivity() {
     private lateinit var preferencesRepository: UserPreferencesRepository
@@ -149,10 +149,10 @@ class MainActivity : ComponentActivity() {
             val userPreferences by preferencesRepository.userPreferencesFlow
                 .collectAsState(initial = UserPreferences())
 
-            CyberPulseTheme(themeName = userPreferences.theme) {
+            SonaTheme(themeName = userPreferences.theme) {
                 val navController = rememberNavController()
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    CyberPulseNavHost(
+                    SonaNavHost(
                         navController = navController,
                         preferencesRepository = preferencesRepository,
                         musicRepository = musicRepository,
@@ -165,12 +165,12 @@ class MainActivity : ComponentActivity() {
 }`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/core/designsystem/Color.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/core/designsystem/Color.kt',
     name: 'Color.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Precision Cyberpunk & OLED Color Tokens',
-    content: `package com.daddyizz.cyberpulse.core.designsystem
+    content: `package com.daddyizz.sona.core.designsystem
 
 import androidx.compose.ui.graphics.Color
 
@@ -189,17 +189,17 @@ val WarningAmber = Color(0xFFFFB800)     // Warning Accent
 val AlertRed = Color(0xFFFF3366)         // Error Accent`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/core/data/DemoMusicSourceProvider.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/core/data/DemoMusicSourceProvider.kt',
     name: 'DemoMusicSourceProvider.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Source-Agnostic Music Provider Implementation',
-    content: `package com.daddyizz.cyberpulse.core.data
+    content: `package com.daddyizz.sona.core.data
 
-import com.daddyizz.cyberpulse.core.model.*
+import com.daddyizz.sona.core.model.*
 
 class DemoMusicSourceProvider : MusicSourceProvider {
-    override val providerName: String = "CyberPulse Local Engine"
+    override val providerName: String = "Sona Local Engine"
     override val providerSource: MusicSource = MusicSource.DEMO
 
     private val demoTracks = listOf(
@@ -218,7 +218,7 @@ class DemoMusicSourceProvider : MusicSourceProvider {
 }`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/onboarding/OnboardingScreen.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/onboarding/OnboardingScreen.kt',
     name: 'OnboardingScreen.kt',
     type: 'file',
     language: 'kotlin',
@@ -228,17 +228,17 @@ class DemoMusicSourceProvider : MusicSourceProvider {
 // Step 3: Favorite Artists (Geometric avatar cards)
 // Step 4: Personalization recommendations toggle
 // Step 5: Android runtime notifications permission flow
-// Step 6: "You're ready." -> Enter CyberPulse`
+// Step 6: "You're ready." -> Enter Sona`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/core/model/MusicSourceProvider.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/core/model/MusicSourceProvider.kt',
     name: 'MusicSourceProvider.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Source-Agnostic Music Provider Interface (Search, Entity Metadata, Capabilities)',
-    content: `package com.daddyizz.cyberpulse.core.model
+    content: `package com.daddyizz.sona.core.model
 
-import com.daddyizz.cyberpulse.core.common.AppResult
+import com.daddyizz.sona.core.common.AppResult
 
 interface MusicSourceProvider {
     val providerName: String
@@ -256,16 +256,16 @@ interface MusicSourceProvider {
 }`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/core/provider/YouTubeMetadataProvider.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/core/provider/YouTubeMetadataProvider.kt',
     name: 'YouTubeMetadataProvider.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Public YouTube Data API v3 Metadata Provider (Terms Compliant)',
-    content: `package com.daddyizz.cyberpulse.core.provider
+    content: `package com.daddyizz.sona.core.provider
 
-import com.daddyizz.cyberpulse.core.common.*
-import com.daddyizz.cyberpulse.core.model.*
-import com.daddyizz.cyberpulse.core.network.YouTubeApiService
+import com.daddyizz.sona.core.common.*
+import com.daddyizz.sona.core.model.*
+import com.daddyizz.sona.core.network.YouTubeApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -283,22 +283,22 @@ class YouTubeMetadataProvider(
                 val items = response.items.mapNotNull { it.toSearchResultItem() }
                 AppResult.Success(SearchResultPage(items = items, nextPageToken = response.nextPageToken))
             } catch (e: Exception) {
-                AppResult.Error(CyberPulseError.fromThrowable(e))
+                AppResult.Error(SonaError.fromThrowable(e))
             }
         }
 }`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/core/data/SearchRepository.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/core/data/SearchRepository.kt',
     name: 'SearchRepository.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Unified Search Orchestration with TTL In-Memory Cache and Offline Fallback',
-    content: `package com.daddyizz.cyberpulse.core.data
+    content: `package com.daddyizz.sona.core.data
 
-import com.daddyizz.cyberpulse.core.cache.MetadataCache
-import com.daddyizz.cyberpulse.core.common.AppResult
-import com.daddyizz.cyberpulse.core.model.*
+import com.daddyizz.sona.core.cache.MetadataCache
+import com.daddyizz.sona.core.common.AppResult
+import com.daddyizz.sona.core.model.*
 
 class SearchRepository(
     private val primaryProvider: MusicSourceProvider,
@@ -320,7 +320,7 @@ class SearchRepository(
 }`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/details/ArtistDetailScreen.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/details/ArtistDetailScreen.kt',
     name: 'ArtistDetailScreen.kt',
     type: 'file',
     language: 'kotlin',
@@ -331,7 +331,7 @@ class SearchRepository(
 // Deep links to AlbumDetailScreen`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/details/AlbumDetailScreen.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/details/AlbumDetailScreen.kt',
     name: 'AlbumDetailScreen.kt',
     type: 'file',
     language: 'kotlin',
@@ -341,7 +341,7 @@ class SearchRepository(
 // Indexed tracklist with individual track selection`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/details/PlaylistDetailScreen.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/details/PlaylistDetailScreen.kt',
     name: 'PlaylistDetailScreen.kt',
     type: 'file',
     language: 'kotlin',
@@ -351,12 +351,12 @@ class SearchRepository(
 // Track Action overflow integration and YouTube external notice`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/player/NowPlayingScreen.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/player/NowPlayingScreen.kt',
     name: 'NowPlayingScreen.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Block 3B Native Now Playing Screen with Live Scrubbing & Adaptive Layout',
-    content: `package com.daddyizz.cyberpulse.feature.player
+    content: `package com.daddyizz.sona.feature.player
 
 // - Phone & Tablet / Wide Dual-Column Layout
 // - Live ScrubbingSlider with isScrubbing jitter-free position tracking
@@ -364,12 +364,12 @@ class SearchRepository(
 // - Authoritative Queue Sheet & Track Overflow Actions trigger`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/player/QueueView.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/player/QueueView.kt',
     name: 'QueueView.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Block 3B Authoritative Queue Bottom Sheet with Reordering and Clear',
-    content: `package com.daddyizz.cyberpulse.feature.player
+    content: `package com.daddyizz.sona.feature.player
 
 // - Displays Now Playing track and upcoming queue
 // - Queue reordering via moveQueueItem up/down controls
@@ -377,12 +377,12 @@ class SearchRepository(
 // - Clear queue functionality with state synchronization`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/player/TrackActionBottomSheet.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/player/TrackActionBottomSheet.kt',
     name: 'TrackActionBottomSheet.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Block 3B Track Overflow Actions Sheet (Play Next, Add to Queue, Like, Playlist)',
-    content: `package com.daddyizz.cyberpulse.feature.player
+    content: `package com.daddyizz.sona.feature.player
 
 // - Play Now (Capability aware: direct playback vs external notice)
 // - Play Next (Inserts track immediately after current index in Media3 queue)
@@ -391,12 +391,12 @@ class SearchRepository(
 // - Source Information & YouTube Terms compliance details`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/player/lyrics/LyricsScreen.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/player/lyrics/LyricsScreen.kt',
     name: 'LyricsScreen.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Block 9A Synced Cyber Lyrics with LRC Parsing & Line Seeking',
-    content: `package com.daddyizz.cyberpulse.feature.player.lyrics
+    content: `package com.daddyizz.sona.feature.player.lyrics
 
 // - Synced lyrics parser & auto-scroll engine
 // - Tap-to-seek to lyric timestamp in Media3
@@ -404,15 +404,15 @@ class SearchRepository(
 // - Copyright compliant provider abstraction (Local & Licensed only)`
   },
   {
-    path: 'app/src/main/java/com/daddyizz/cyberpulse/feature/player/visualizer/VisualizerCanvas.kt',
+    path: 'app/src/main/java/com/daddyizz/sona/feature/player/visualizer/VisualizerCanvas.kt',
     name: 'VisualizerCanvas.kt',
     type: 'file',
     language: 'kotlin',
     description: 'Block 9A Audio Visualizer Canvas with 5 Cyber Modes & Pro Gating',
-    content: `package com.daddyizz.cyberpulse.feature.player.visualizer
+    content: `package com.daddyizz.sona.feature.player.visualizer
 
 // - 5 Cyber Visualizer Modes: Neon Wave, Spectrum Pulse, Cyber Grid, Orbital, Particle Flow
-// - CyberPulse Pro Entitlement gating for advanced visualizer modes
+// - Sona Pro Entitlement gating for advanced visualizer modes
 // - YouTube Protected Source detection: switches to Ambient Simulated Pulse
 // - Hardware-accelerated Compose Canvas rendering`
   },
@@ -422,11 +422,11 @@ class SearchRepository(
     type: 'file',
     language: 'markdown',
     description: 'Comprehensive Project Documentation & Gradle Build Guide',
-    content: `# CyberPulse Music — Native Android Platform
+    content: `# Sona Music — Native Android Platform
 
 Build Block 1: Native Android Foundation + Cyberpunk UI + Navigation + Onboarding
 
-- Application ID: com.daddyizz.cyberpulse
+- Application ID: com.daddyizz.sona
 - UI Framework: Jetpack Compose + Material 3
 - Language: Kotlin 2.0.0
 - Build: ./gradlew assembleDebug`
@@ -453,7 +453,7 @@ export const CodebaseExplorer: React.FC = () => {
           </div>
           <div>
             <div className="text-sm font-bold text-white flex items-center gap-2">
-              <span>com.daddyizz.cyberpulse</span>
+              <span>com.daddyizz.sona</span>
               <span className="text-[10px] bg-[#00F5FF]/20 text-[#00F5FF] px-2 py-0.5 rounded-full font-mono">
                 Block 1 Foundation
               </span>

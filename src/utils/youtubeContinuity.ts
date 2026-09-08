@@ -221,7 +221,7 @@ const createSingleton = (videoId: string, startSeconds: number) => {
 
   const frame = document.createElement('iframe');
   frame.id = SINGLETON_ID;
-  frame.title = 'CyberPulse canonical playback transport';
+  frame.title = 'Sona canonical playback transport';
   frame.allow = 'autoplay; encrypted-media; picture-in-picture';
   frame.setAttribute('aria-hidden', 'true');
   Object.assign(frame.style, {
@@ -234,7 +234,7 @@ const createSingleton = (videoId: string, startSeconds: number) => {
     pointerEvents: 'none',
     border: '0',
   });
-  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&controls=0&playsinline=1&autoplay=0&rel=0&origin=${encodeURIComponent(
+  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&controls=0&playsinline=1&autoplay=0&rel=0&vq=medium&suggestedQuality=medium&origin=${encodeURIComponent(
     window.location.origin
   )}`;
   document.body.appendChild(frame);
@@ -249,6 +249,8 @@ const createSingleton = (videoId: string, startSeconds: number) => {
     () => {
       const prepare = () => {
         listenToSingleton();
+        command('setPlaybackQuality', ['medium']);
+        command('setPlaybackQualityRange', ['small', 'medium']);
         command('unMute');
         if (currentTime > 0) command('seekTo', [currentTime, true]);
         command(requestedPlaying ? 'playVideo' : 'pauseVideo');
@@ -279,6 +281,8 @@ const loadCanonicalVideo = (videoId: string, startSeconds: number, play: boolean
     duration = 0;
     command('loadVideoById', [videoId, currentTime]);
     window.setTimeout(() => {
+      command('setPlaybackQuality', ['medium']);
+      command('setPlaybackQualityRange', ['small', 'medium']);
       command('unMute');
       command(play ? 'playVideo' : 'pauseVideo');
     }, 120);

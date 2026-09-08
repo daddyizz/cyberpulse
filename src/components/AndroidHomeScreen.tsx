@@ -51,7 +51,7 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
 
   return (
     <div className="relative w-full h-full flex flex-col justify-between p-4 overflow-hidden select-none bg-gradient-to-b from-[#0B132B] via-[#1C2541] to-[#0A0E1A]">
-      {/* Dynamic Android Ambient Glow based on CyberPulse */}
+      {/* Dynamic Android Ambient Glow based on Sona */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#00F5FF]/10 rounded-full blur-[90px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-60 h-60 bg-[#FF2ED1]/10 rounded-full blur-[80px] pointer-events-none" />
 
@@ -60,13 +60,13 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
         <div className="flex justify-between items-start">
           <div>
             <div className="text-2xl font-semibold text-white tracking-tight">
-              {new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short' })}
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
             </div>
             <div className="text-xs text-white/70 flex items-center gap-1.5 mt-0.5">
-              <span>29°C Cerah</span>
+              <span>29°C Clear</span>
               <span>•</span>
               <span className="text-[#00F5FF] flex items-center gap-1">
-                <Volume2 className="w-3 h-3" /> CyberPulse Audio Aktif
+                <Volume2 className="w-3 h-3" /> Sona Audio Active
               </span>
             </div>
           </div>
@@ -91,7 +91,7 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
           <div className="flex items-center justify-between text-[11px] text-white/60">
             <div className="flex items-center gap-1.5 font-bold text-[#00F5FF]">
               <Headphones className="w-3.5 h-3.5 animate-pulse" />
-              <span className="tracking-wider uppercase text-[10px]">CyberPulse Background Playback</span>
+              <span className="tracking-wider uppercase text-[10px]">Sona Background Playback</span>
             </div>
             <span className="px-2 py-0.5 rounded-full bg-[#00F5FF]/15 text-[#00F5FF] border border-[#00F5FF]/30 text-[9px] font-mono font-bold">
               MEDIA SESSION
@@ -102,7 +102,7 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
           <div
             onClick={onResumeApp}
             className="flex items-center gap-3.5 cursor-pointer hover:opacity-90 transition-opacity"
-            title="Click to return to CyberPulse"
+            title="Click to return to Sona"
           >
             <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg border border-white/15 shrink-0 relative">
               <CyberArtwork
@@ -192,7 +192,7 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
       <div className="space-y-4 pb-2 z-10">
         {/* App Icons Grid */}
         <div className="grid grid-cols-4 gap-3 px-2">
-          {/* CyberPulse App Icon (Highlighted with Active Badge) */}
+          {/* Sona App Icon (Highlighted with Active Badge) */}
           <button
             onClick={onResumeApp}
             className="flex flex-col items-center gap-1 group cursor-pointer"
@@ -207,7 +207,7 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
                 </div>
               )}
             </div>
-            <span className="text-[11px] font-semibold text-white truncate max-w-full">CyberPulse</span>
+            <span className="text-[11px] font-semibold text-white truncate max-w-full">Sona</span>
           </button>
 
           {/* Chrome Icon */}
@@ -223,7 +223,7 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
             <div className="w-14 h-14 rounded-2xl bg-[#1E293B] border border-white/10 flex items-center justify-center shadow-md">
               <Camera className="w-6 h-6 text-[#A78BFA]" />
             </div>
-            <span className="text-[11px] font-semibold text-white/80">Kamera</span>
+            <span className="text-[11px] font-semibold text-white/80">Camera</span>
           </div>
 
           {/* Phone Icon */}
@@ -231,7 +231,7 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
             <div className="w-14 h-14 rounded-2xl bg-[#1E293B] border border-white/10 flex items-center justify-center shadow-md">
               <Phone className="w-6 h-6 text-[#4ADE80]" />
             </div>
-            <span className="text-[11px] font-semibold text-white/80">Telefon</span>
+            <span className="text-[11px] font-semibold text-white/80">Phone</span>
           </div>
         </div>
 
@@ -240,7 +240,7 @@ export const AndroidHomeScreen: React.FC<AndroidHomeScreenProps> = ({
           <div className="w-full h-11 rounded-full bg-white/10 backdrop-blur-xl border border-white/15 px-4 flex items-center justify-between text-white/70">
             <div className="flex items-center gap-2 text-xs">
               <Search className="w-4 h-4 text-[#00F5FF]" />
-              <span>Cari aplikasi atau web...</span>
+              <span>Search apps or web...</span>
             </div>
             <Sparkles className="w-4 h-4 text-[#FF2ED1]" />
           </div>
