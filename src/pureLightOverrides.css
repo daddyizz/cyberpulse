@@ -73,31 +73,76 @@ html.cyber-theme-pure_light span.w-fit.mb-2.bg-slate-900 {
   border: 1px solid #cbd5e1 !important;
 }
 
-/* Pure Light square icon badges should be pale, never anonymous navy blobs. */
+/* Generic square icon badges may be pale, but do not recolour every dark Pro action. */
 html.theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900,
-html.cyber-theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900,
-html.theme-pure_light .sona-subscription-container .bg-slate-900,
-html.cyber-theme-pure_light .sona-subscription-container .bg-slate-900 {
+html.cyber-theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900 {
   background: #e2e8f0 !important;
   color: #0f172a !important;
   border-color: #cbd5e1 !important;
   box-shadow: none !important;
 }
 html.theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900 svg,
-html.cyber-theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900 svg,
-html.theme-pure_light .sona-subscription-container .bg-slate-900 svg,
-html.cyber-theme-pure_light .sona-subscription-container .bg-slate-900 svg {
+html.cyber-theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900 svg {
   color: #0f172a !important;
   fill: none !important;
   stroke: currentColor !important;
 }
 
-/* Annual-plan badge and selection dot: light chip + dark visible icon/text. */
-html.theme-pure_light .sona-subscription-container .absolute.rounded-full,
-html.cyber-theme-pure_light .sona-subscription-container .absolute.rounded-full {
+/* Pro header icon, annual badge/check stay light and legible. */
+html.theme-pure_light .sona-subscription-container .w-9.h-9.rounded-xl,
+html.cyber-theme-pure_light .sona-subscription-container .w-9.h-9.rounded-xl,
+html.theme-pure_light .sona-subscription-container .absolute.-top-2\.5.rounded-full,
+html.cyber-theme-pure_light .sona-subscription-container .absolute.-top-2\.5.rounded-full,
+html.theme-pure_light .sona-subscription-container .w-4.h-4.rounded-full,
+html.cyber-theme-pure_light .sona-subscription-container .w-4.h-4.rounded-full {
   background: #e2e8f0 !important;
   color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+html.theme-pure_light .sona-subscription-container .w-9.h-9.rounded-xl svg,
+html.cyber-theme-pure_light .sona-subscription-container .w-9.h-9.rounded-xl svg,
+html.theme-pure_light .sona-subscription-container .w-4.h-4.rounded-full svg,
+html.cyber-theme-pure_light .sona-subscription-container .w-4.h-4.rounded-full svg {
+  color: #0f172a !important;
+  stroke: currentColor !important;
+}
+
+/* Selected payment method and Activate button are intentional dark primary actions. */
+html.theme-pure_light .sona-subscription-container button[class*="bg-slate-900"],
+html.cyber-theme-pure_light .sona-subscription-container button[class*="bg-slate-900"],
+html.theme-pure_light .sona-subscription-container button[type="submit"],
+html.cyber-theme-pure_light .sona-subscription-container button[type="submit"] {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16) !important;
+}
+html.theme-pure_light .sona-subscription-container button[class*="bg-slate-900"] *,
+html.cyber-theme-pure_light .sona-subscription-container button[class*="bg-slate-900"] *,
+html.theme-pure_light .sona-subscription-container button[type="submit"] *,
+html.cyber-theme-pure_light .sona-subscription-container button[type="submit"] * {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+
+/* Android-style background widget intentionally stays dark in every app theme. */
+html.theme-pure_light div[class*="from-[#0B132B]"],
+html.cyber-theme-pure_light div[class*="from-[#0B132B]"] {
+  color: #ffffff !important;
+}
+html.theme-pure_light div[class*="from-[#0B132B]"] [class*="text-white"],
+html.cyber-theme-pure_light div[class*="from-[#0B132B]"] [class*="text-white"] {
+  color: #ffffff !important;
+}
+html.theme-pure_light div[class*="from-[#0B132B]"] button svg,
+html.cyber-theme-pure_light div[class*="from-[#0B132B]"] button svg {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+html.theme-pure_light div[class*="from-[#0B132B]"] [class*="bg-[#0A0D17]"],
+html.cyber-theme-pure_light div[class*="from-[#0B132B]"] [class*="bg-[#0A0D17]"] {
+  background-color: rgba(10, 13, 23, 0.92) !important;
 }
 
 /* Restore Liked Songs heart badge gradient. */
