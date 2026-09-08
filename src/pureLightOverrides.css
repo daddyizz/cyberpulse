@@ -1,4 +1,4 @@
-/* Final Pure Light contrast/layout overrides based on AI Studio mobile screenshots. */
+/* Pure Light overrides: targeted, high-contrast, and non-destructive. */
 html.theme-pure_light,
 html.cyber-theme-pure_light {
   --sona-light-bg: #f8fafc;
@@ -9,14 +9,13 @@ html.cyber-theme-pure_light {
   --sona-light-muted: #475569;
 }
 
+/* Legacy white/light text on light surfaces. */
 html.theme-pure_light [class*="text-[#F7F8FC]"],
 html.theme-pure_light [class*="text-[#F1F5F9]"],
-html.theme-pure_light [class*="text-white"],
 html.theme-pure_light [class*="text-slate-50"],
 html.theme-pure_light [class*="text-gray-100"],
 html.cyber-theme-pure_light [class*="text-[#F7F8FC]"],
 html.cyber-theme-pure_light [class*="text-[#F1F5F9]"],
-html.cyber-theme-pure_light [class*="text-white"],
 html.cyber-theme-pure_light [class*="text-slate-50"],
 html.cyber-theme-pure_light [class*="text-gray-100"] {
   color: var(--sona-light-text) !important;
@@ -31,66 +30,77 @@ html.cyber-theme-pure_light [class*="text-[#61697C]"] {
   color: var(--sona-light-muted) !important;
 }
 
-/* Legacy dark surfaces become light in Pure Light. */
-html.theme-pure_light [class*="bg-[#10131C]"],
-html.theme-pure_light [class*="bg-[#171B28]"],
-html.theme-pure_light [class*="bg-[#141418]"],
-html.theme-pure_light [class*="bg-[#141416]"],
-html.theme-pure_light [class*="bg-[#1C1C20]"],
-html.theme-pure_light [class*="bg-[#1C1C22]"],
-html.theme-pure_light [class*="bg-[#242428]"],
-html.theme-pure_light [class*="bg-[#0C0C0E]"],
-html.theme-pure_light [class*="bg-[#0C0C0D]"],
-html.cyber-theme-pure_light [class*="bg-[#10131C]"],
-html.cyber-theme-pure_light [class*="bg-[#171B28]"],
-html.cyber-theme-pure_light [class*="bg-[#141418]"],
-html.cyber-theme-pure_light [class*="bg-[#141416]"],
-html.cyber-theme-pure_light [class*="bg-[#1C1C20]"],
-html.cyber-theme-pure_light [class*="bg-[#1C1C22]"],
-html.cyber-theme-pure_light [class*="bg-[#242428]"],
-html.cyber-theme-pure_light [class*="bg-[#0C0C0E]"],
-html.cyber-theme-pure_light [class*="bg-[#0C0C0D]"] {
-  background-color: var(--sona-light-surface) !important;
-  background-image: none !important;
-  border-color: var(--sona-light-border) !important;
-  color: var(--sona-light-text) !important;
-  box-shadow: none !important;
-}
-
-/* Pure Light pills/chips: no black pills. */
-html.theme-pure_light button.rounded-full,
-html.theme-pure_light button[class*="rounded-full"],
-html.cyber-theme-pure_light button.rounded-full,
-html.cyber-theme-pure_light button[class*="rounded-full"] {
+/* Search / Explore / Library pills that were hard-coded dark. */
+html.theme-pure_light button[class*="bg-[#10131C]"],
+html.theme-pure_light button[class*="bg-[#0A1A0F]"],
+html.theme-pure_light button[class*="bg-[#1A0D10]"],
+html.cyber-theme-pure_light button[class*="bg-[#10131C]"],
+html.cyber-theme-pure_light button[class*="bg-[#0A1A0F]"],
+html.cyber-theme-pure_light button[class*="bg-[#1A0D10]"] {
   background-color: #f1f5f9 !important;
   border-color: #cbd5e1 !important;
   color: #0f172a !important;
   box-shadow: none !important;
 }
-html.theme-pure_light button[class*="rounded-full"] *,
-html.cyber-theme-pure_light button[class*="rounded-full"] * {
+html.theme-pure_light button[class*="bg-[#10131C]"] *,
+html.theme-pure_light button[class*="bg-[#0A1A0F]"] *,
+html.theme-pure_light button[class*="bg-[#1A0D10]"] *,
+html.cyber-theme-pure_light button[class*="bg-[#10131C]"] *,
+html.cyber-theme-pure_light button[class*="bg-[#0A1A0F]"] *,
+html.cyber-theme-pure_light button[class*="bg-[#1A0D10]"] * {
   color: inherit !important;
 }
 
-/* Keep Spotify / YouTube recognizable without using near-black fills. */
+/* Brand-specific light chips keep their brand colour without black fill. */
 html.theme-pure_light button[class*="bg-[#1DB954]"],
-html.theme-pure_light button[class*="bg-[#0A1A0F]"],
-html.cyber-theme-pure_light button[class*="bg-[#1DB954]"],
-html.cyber-theme-pure_light button[class*="bg-[#0A1A0F]"] {
+html.cyber-theme-pure_light button[class*="bg-[#1DB954]"] {
   background-color: #ecfdf3 !important;
   border-color: #86efac !important;
   color: #166534 !important;
 }
 html.theme-pure_light button[class*="bg-[#FF0000]"],
-html.theme-pure_light button[class*="bg-[#1A0D10]"],
-html.cyber-theme-pure_light button[class*="bg-[#FF0000]"],
-html.cyber-theme-pure_light button[class*="bg-[#1A0D10]"] {
+html.cyber-theme-pure_light button[class*="bg-[#FF0000]"] {
   background-color: #fff1f2 !important;
   border-color: #fecdd3 !important;
   color: #b91c1c !important;
 }
 
-/* Restore the Liked Songs heart badge gradient. */
+/* Featured Mix label above ELECTRIC DREAMS. */
+html.theme-pure_light span.w-fit.mb-2.bg-slate-900,
+html.cyber-theme-pure_light span.w-fit.mb-2.bg-slate-900 {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* Pure Light square icon badges should be pale, never anonymous navy blobs. */
+html.theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900,
+html.cyber-theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900,
+html.theme-pure_light .sona-subscription-container .bg-slate-900,
+html.cyber-theme-pure_light .sona-subscription-container .bg-slate-900 {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+html.theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900 svg,
+html.cyber-theme-pure_light .w-9.h-9.rounded-xl.bg-slate-900 svg,
+html.theme-pure_light .sona-subscription-container .bg-slate-900 svg,
+html.cyber-theme-pure_light .sona-subscription-container .bg-slate-900 svg {
+  color: #0f172a !important;
+  fill: none !important;
+  stroke: currentColor !important;
+}
+
+/* Annual-plan badge and selection dot: light chip + dark visible icon/text. */
+html.theme-pure_light .sona-subscription-container .absolute.rounded-full,
+html.cyber-theme-pure_light .sona-subscription-container .absolute.rounded-full {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* Restore Liked Songs heart badge gradient. */
 html.theme-pure_light div.w-12.h-12[class*="from-[#FF2ED1]"][class*="to-[#8B5CFF]"],
 html.cyber-theme-pure_light div.w-12.h-12[class*="from-[#FF2ED1]"][class*="to-[#8B5CFF]"] {
   background-image: linear-gradient(135deg, #ff2ed1 0%, #8b5cff 100%) !important;
@@ -102,7 +112,7 @@ html.cyber-theme-pure_light div.w-12.h-12[class*="from-[#FF2ED1]"][class*="to-[#
   fill: #ffffff !important;
 }
 
-/* Settings Save button stays inside the card globally. */
+/* Settings Save button stays inside the card. */
 #settings-account { overflow: hidden; }
 #settings-account form,
 #settings-account form > div.flex.items-center.gap-2 { width: 100%; max-width: 100%; }
@@ -133,12 +143,12 @@ html.cyber-theme-pure_light .sona-subscription-container {
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.16) !important;
 }
 
-/* Spotify import modal: safe below simulated status bar. */
+/* Spotify import modal safe area. */
 .sona-spotify-import-modal {
   max-height: calc(100dvh - 5.5rem) !important;
 }
 
-/* Full Lyrics must follow Pure Light even if a stale caller passes the old dark default. */
+/* Full Lyrics Pure Light. */
 html.theme-pure_light .sona-lyrics-modal,
 html.cyber-theme-pure_light .sona-lyrics-modal {
   background: #ffffff !important;
@@ -165,7 +175,10 @@ html.cyber-theme-pure_light .sona-lyrics-modal [class*="text-[#CCFF00]"] {
 }
 
 @media (max-width: 390px) {
-  #settings-account form button[type="submit"] { max-width: 5.75rem !important; font-size: 0.68rem !important; }
+  #settings-account form button[type="submit"] {
+    max-width: 5.75rem !important;
+    font-size: 0.68rem !important;
+  }
   html.theme-pure_light .sona-subscription-container,
   html.cyber-theme-pure_light .sona-subscription-container {
     max-height: calc(100dvh - 6.5rem) !important;
