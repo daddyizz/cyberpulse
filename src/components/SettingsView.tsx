@@ -103,6 +103,42 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const subtextClass = isLight ? 'text-slate-500 text-[11px]' : 'text-[#8E8E93] text-[11px]';
   const headingClass = isLight ? 'text-slate-900 font-black' : 'text-white font-black';
 
+  // Standardized, high-contrast switch component unified across the entire app
+  const UnifiedSwitch = ({
+    checked,
+    onChange,
+    ariaLabel,
+  }: {
+    checked: boolean;
+    onChange: (val: boolean) => void;
+    ariaLabel?: string;
+  }) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      onClick={() => onChange(!checked)}
+      className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+        checked
+          ? isLight
+            ? 'bg-slate-900'
+            : 'bg-[var(--sona-accent,#CCFF00)]'
+          : isLight
+          ? 'bg-slate-200'
+          : 'bg-[#2E2E36]'
+      }`}
+    >
+      <div
+        className={`w-5 h-5 rounded-full absolute top-0.5 transition-transform shadow-sm ${
+          checked
+            ? `translate-x-6.5 ${isLight ? 'bg-white' : 'bg-black'}`
+            : `translate-x-0.5 ${isLight ? 'bg-white shadow-sm' : 'bg-[#8E8E93]'}`
+        }`}
+      />
+    </button>
+  );
+
   return (
     <div
       className={`p-4 space-y-6 pb-32 animate-in fade-in duration-200 ${
@@ -157,7 +193,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               value={inputName}
               onChange={(event) => setInputName(event.target.value)}
               placeholder="Enter your name"
-              className={`flex-1 rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-colors ${
+              className={`flex-1 min-w-0 rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-colors ${
                 isLight
                   ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-slate-900 focus:bg-white'
                   : 'bg-[#1C1C22] border-[#2E2E36] text-white focus:border-[var(--sona-accent,#CCFF00)]'
@@ -165,13 +201,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             />
             <button
               type="submit"
-              className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+              className={`shrink-0 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
                 isLight
                   ? 'bg-slate-900 text-white hover:bg-slate-800 active:scale-95'
                   : 'bg-[var(--sona-accent,#CCFF00)] text-black hover:brightness-110 active:scale-95'
               }`}
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="w-3.5 h-3.5 shrink-0" />
               <span>Save</span>
             </button>
           </div>
@@ -362,11 +398,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   eqPreset === preset
                     ? isLight
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'bg-[var(--sona-accent,#CCFF00)] text-black'
+                      ? 'bg-slate-900 text-white shadow-sm font-black ring-1 ring-slate-900'
+                      : 'bg-[var(--sona-accent,#CCFF00)] text-black font-black'
                     : isLight
-                    ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    : 'bg-[#1C1C20] text-[#8E8E93] hover:text-white'
+                    ? 'bg-slate-100 border border-slate-200 text-slate-800 hover:bg-slate-200 hover:text-slate-900'
+                    : 'bg-[#1C1C20] border border-transparent text-[#8E8E93] hover:text-white'
                 }`}
               >
                 {preset}
@@ -407,33 +443,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className={`text-xs font-bold uppercase ${headingClass}`}>Volume Normalization</div>
             <div className={subtextClass}>Maintain consistent sound levels across all streamed songs.</div>
           </div>
-          <button
-            type="button"
-            onClick={() => setVolumeNormalize(!volumeNormalize)}
-            className={`w-12 h-6 rounded-full p-0.5 transition-colors relative cursor-pointer ${
-              volumeNormalize
-                ? isLight
-                  ? 'bg-slate-900'
-                  : 'bg-[var(--sona-accent,#CCFF00)]'
-                : isLight
-                ? 'bg-slate-200'
-                : 'bg-[#2E2E36]'
-            }`}
-          >
-            <div
-              className={`w-5 h-5 rounded-full transition-transform ${
-                volumeNormalize ? 'translate-x-6' : 'translate-x-0'
-              } ${
-                volumeNormalize
-                  ? isLight
-                    ? 'bg-white shadow'
-                    : 'bg-black shadow'
-                  : isLight
-                  ? 'bg-white shadow-sm border border-slate-300'
-                  : 'bg-[#8E8E93]'
-              }`}
-            />
-          </button>
+          <UnifiedSwitch
+            checked={volumeNormalize}
+            onChange={setVolumeNormalize}
+            ariaLabel="Volume Normalization"
+          />
         </div>
       </section>
 
@@ -484,33 +498,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className={`text-xs font-bold uppercase ${headingClass}`}>{item.title}</div>
               <div className={subtextClass}>{item.description}</div>
             </div>
-            <button
-              type="button"
-              onClick={item.toggle}
-              className={`w-12 h-6 rounded-full p-0.5 transition-colors relative cursor-pointer shrink-0 ${
-                item.value
-                  ? isLight
-                    ? 'bg-slate-900'
-                    : 'bg-[var(--sona-accent,#CCFF00)]'
-                  : isLight
-                  ? 'bg-slate-200'
-                  : 'bg-[#2E2E36]'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full transition-transform ${
-                  item.value ? 'translate-x-6' : 'translate-x-0'
-                } ${
-                  item.value
-                    ? isLight
-                      ? 'bg-white shadow'
-                      : 'bg-black shadow'
-                    : isLight
-                    ? 'bg-white shadow-sm border border-slate-300'
-                    : 'bg-[#8E8E93]'
-                }`}
-              />
-            </button>
+            <UnifiedSwitch
+              checked={item.value}
+              onChange={item.toggle}
+              ariaLabel={item.title}
+            />
           </div>
         ))}
       </section>
@@ -554,33 +546,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className={`text-xs font-bold uppercase ${headingClass}`}>Private Listening Session</div>
             <div className={subtextClass}>Do not log playback history or stream stats for this session.</div>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsIncognito(!isIncognito)}
-            className={`w-12 h-6 rounded-full p-0.5 transition-colors relative cursor-pointer shrink-0 ${
-              isIncognito
-                ? isLight
-                  ? 'bg-slate-900'
-                  : 'bg-[var(--sona-accent,#CCFF00)]'
-                : isLight
-                ? 'bg-slate-200'
-                : 'bg-[#2E2E36]'
-            }`}
-          >
-            <div
-              className={`w-5 h-5 rounded-full transition-transform ${
-                isIncognito ? 'translate-x-6' : 'translate-x-0'
-              } ${
-                isIncognito
-                  ? isLight
-                    ? 'bg-white shadow'
-                    : 'bg-black shadow'
-                  : isLight
-                  ? 'bg-white shadow-sm border border-slate-300'
-                  : 'bg-[#8E8E93]'
-              }`}
-            />
-          </button>
+          <UnifiedSwitch
+            checked={isIncognito}
+            onChange={setIsIncognito}
+            ariaLabel="Private Listening Session"
+          />
         </div>
       </section>
 

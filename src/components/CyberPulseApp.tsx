@@ -183,20 +183,36 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
   const [isShuffle, setIsShuffle] = useState<boolean>(false);
   const [isRepeat, setIsRepeat] = useState<boolean>(false);
 
+  // Mini player visibility: Only show once user has explicitly initiated playback
+  const [hasStartedPlayback, setHasStartedPlayback] = useState<boolean>(false);
+
   // Inform parent of playback changes
   useEffect(() => {
     onPlaybackStateChange?.(isPlaying);
+    if (isPlaying) {
+      setHasStartedPlayback(true);
+    }
   }, [isPlaying, onPlaybackStateChange]);
 
   // 2 Main Player Modes: 'audio' (Audio Only) vs 'video' (Music Video)
-  const [playbackMediaMode, setPlaybackMediaMode] = useState<'audio' | 'video'>('video');
+  // Default to 'audio' mode to avoid forcing video playback on song changes
+  const [playbackMediaMode, setPlaybackMediaMode] = useState<'audio' | 'video'>('audio');
   // Sub-options during Audio Only: 'artwork' | 'visualizer' | 'lyrics'
   const [audioVisualMode, setAudioVisualMode] = useState<'artwork' | 'visualizer' | 'lyrics'>('artwork');
+
+  // Strict integer-formatted clock helper (avoids ugly decimal fractions from YouTube metadata)
+  const formatClock = (seconds: number): string => {
+    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+    const total = Math.floor(seconds);
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
+  };
 
   // Ref to control the unified YouTube Player IFrame
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Derive matched YouTube video ID for full-length, high-definition streaming
+  // Derive matched YouTube video ID for full-length streaming
   const effectiveYtId =
     currentTrack.youtubeVideoId ||
     DEMO_TRACKS.find(
@@ -223,7 +239,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           '*'
         );
       } catch (err) {
-        console.error('Error posting command to YouTube iframe:', err);
+        console.error('Failed to send YT command', err);
       }
     }
   };
@@ -529,9 +545,11 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
 
     setCurrentTrack(resolvedTrack);
     setSeekSeconds(0);
-    setPlaybackMediaMode('video');
+    // Respect current playbackMediaMode (stay in audio mode if already in audio mode)
+    setHasStartedPlayback(true);
     setIsNowPlayingOpen(true);
     setIsPlaying(true);
+    sendYTCommand('setPlaybackQuality', ['medium']);
   };
 
   const handleSelectTrack = async (track: Track) => {
@@ -558,13 +576,16 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
       ...track,
       audioUrl: resolvedAudioUrl,
       youtubeVideoId: initialYtId || '4NRXx6U8ABQ',
+      source: 'YOUTUBE',
     };
 
+    setHasStartedPlayback(true);
     setCurrentTrack(playableTrack);
     setSeekSeconds(0);
     setActiveSpotifyPlayerTrack(null);
     setActiveYouTubePlayerTrack(null);
     setIsPlaying(true);
+    sendYTCommand('setPlaybackQuality', ['medium']);
 
     // If no exact YouTube ID was found and track is from Spotify/Search, query YouTube in background for full song
     if (!initialYtId) {
@@ -574,10 +595,11 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           const matchedId = ytRes.tracks[0].youtubeVideoId;
           setCurrentTrack((prev) => {
             if (prev.id === track.id || prev.title.toLowerCase() === track.title.toLowerCase()) {
-              return { ...prev, youtubeVideoId: matchedId };
+              return { ...prev, youtubeVideoId: matchedId, source: 'YOUTUBE' };
             }
             return prev;
           });
+          sendYTCommand('setPlaybackQuality', ['medium']);
         }
       } catch (err) {
         console.error('Error fetching full YouTube stream for Spotify track:', err);
@@ -592,35 +614,47 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
   const handleNextTrack = () => {
     const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
     const nextIndex = currentIndex < tracks.length - 1 ? currentIndex + 1 : 0;
-    const nextTrack = tracks[nextIndex];
+    const nextTrack = tracks[nextIndex] || tracks[0];
     const matchYt = DEMO_TRACKS.find(
       (t) => t.id === nextTrack.id || t.title.toLowerCase() === nextTrack.title.toLowerCase()
     );
 
+    const effectiveId = nextTrack.youtubeVideoId || matchYt?.youtubeVideoId || '4NRXx6U8ABQ';
+
+    setHasStartedPlayback(true);
     setCurrentTrack({
       ...nextTrack,
-      youtubeVideoId: nextTrack.youtubeVideoId || matchYt?.youtubeVideoId || '4NRXx6U8ABQ',
-      source: isYouTubeActive || playbackMediaMode === 'video' ? 'YOUTUBE' : nextTrack.source,
+      youtubeVideoId: effectiveId,
+      source: 'YOUTUBE',
     });
     setSeekSeconds(0);
     setIsPlaying(true);
+    // Keep YouTube stream locked to 360p/480p for fast low-bandwidth switching
+    sendYTCommand('setPlaybackQuality', ['medium']);
+    sendYTCommand('playVideo');
   };
 
   const handlePrevTrack = () => {
     const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id);
     const prevIndex = currentIndex > 0 ? currentIndex - 1 : tracks.length - 1;
-    const prevTrack = tracks[prevIndex];
+    const prevTrack = tracks[prevIndex] || tracks[0];
     const matchYt = DEMO_TRACKS.find(
       (t) => t.id === prevTrack.id || t.title.toLowerCase() === prevTrack.title.toLowerCase()
     );
 
+    const effectiveId = prevTrack.youtubeVideoId || matchYt?.youtubeVideoId || '4NRXx6U8ABQ';
+
+    setHasStartedPlayback(true);
     setCurrentTrack({
       ...prevTrack,
-      youtubeVideoId: prevTrack.youtubeVideoId || matchYt?.youtubeVideoId || '4NRXx6U8ABQ',
-      source: isYouTubeActive || playbackMediaMode === 'video' ? 'YOUTUBE' : prevTrack.source,
+      youtubeVideoId: effectiveId,
+      source: 'YOUTUBE',
     });
     setSeekSeconds(0);
     setIsPlaying(true);
+    // Keep YouTube stream locked to 360p/480p for fast low-bandwidth switching
+    sendYTCommand('setPlaybackQuality', ['medium']);
+    sendYTCommand('playVideo');
   };
 
   // Complete Onboarding
@@ -712,7 +746,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
   }
 
   return (
-    <div className={`relative w-full h-full flex flex-col ${bgColor} text-[#F7F8FC] select-none overflow-hidden font-sans`}>
+    <div className={`relative w-full h-full flex flex-col ${bgColor} ${isLight ? 'text-slate-900' : 'text-[#F7F8FC]'} select-none overflow-hidden font-sans`}>
       {/* Ambient Lighting Orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div
@@ -772,7 +806,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
         )}
 
         {/* Dynamic Screen View */}
-        <main className="flex-1 overflow-y-auto flex flex-col relative pb-28">
+        <main className={`flex-1 overflow-y-auto flex flex-col relative ${hasStartedPlayback ? 'pb-36' : 'pb-24'}`}>
           {/* SCREEN: ONBOARDING */}
           {currentScreen === 'onboarding' && (
             <div className="flex-1 flex flex-col p-6 max-w-lg mx-auto w-full justify-between">
@@ -1017,32 +1051,48 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
               <header className="flex items-center justify-between pb-3 border-b border-[#171B28]">
                 <div className="flex flex-col">
                   <span className="text-[#9CA3B7] text-xs font-bold tracking-widest uppercase">{greeting}</span>
-                  <h1 className="text-2xl font-black tracking-tight text-[#00F5FF]">CYBER LISTENER</h1>
+                  <h1 className={`text-2xl font-black tracking-tight ${isLight ? 'text-slate-900' : 'text-[#CCFF00]'}`}>
+                    {displayName.toUpperCase()}
+                  </h1>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3">
                   {onToggleMinimize && (
                     <button
                       onClick={onToggleMinimize}
-                      className="p-2 rounded-full bg-[#10131C] border border-[#171B28] hover:border-[#00F5FF]/40 text-[#9CA3B7] hover:text-[#00F5FF] transition-colors cursor-pointer"
-                      title="Minimize App (Uji Main di Latar Belakang)"
+                      className={`p-2 rounded-full border transition-colors cursor-pointer ${
+                        isLight
+                          ? 'bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900'
+                          : 'bg-[#10131C] border-[#171B28] text-[#9CA3B7] hover:text-[#CCFF00]'
+                      }`}
+                      title="Minimize App (Test Background Playback)"
                     >
                       <Home className="w-4 h-4" />
                     </button>
                   )}
                   <button
                     onClick={() => setCurrentScreen('settings')}
-                    className="p-2 rounded-full bg-[#10131C] border border-[#171B28] hover:border-[#00F5FF]/40 text-[#9CA3B7] hover:text-[#F7F8FC] transition-colors cursor-pointer"
+                    className={`p-2 rounded-full border transition-colors cursor-pointer ${
+                      isLight
+                        ? 'bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900'
+                        : 'bg-[#10131C] border-[#171B28] text-[#9CA3B7] hover:text-[#F7F8FC]'
+                    }`}
                     title="Settings"
                   >
                     <Settings className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setCurrentScreen('profile')}
-                    className="w-10 h-10 rounded-full bg-[#171B28] border border-[#00F5FF]/30 flex items-center justify-center shadow-lg shadow-black cursor-pointer hover:border-[#00F5FF] transition-colors"
+                    className={`w-10 h-10 rounded-full border flex items-center justify-center shadow-lg cursor-pointer transition-colors ${
+                      isLight
+                        ? 'bg-slate-100 border-slate-300 hover:border-slate-500 shadow-slate-200'
+                        : 'bg-[#171B28] border-[#CCFF00]/30 hover:border-[#CCFF00] shadow-black'
+                    }`}
                     title="Profile"
                   >
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#00F5FF] to-[#8B5CFF] flex items-center justify-center text-[10px] font-black text-black">
-                      CL
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black ${
+                      isLight ? 'bg-slate-900 text-white' : 'bg-[#CCFF00] text-black'
+                    }`}>
+                      {displayName.substring(0, 2).toUpperCase()}
                     </div>
                   </button>
                 </div>
@@ -1050,18 +1100,32 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
 
               {/* Featured Mix Hero Section */}
               <section className="w-full">
-                <div className="relative h-56 w-full rounded-2xl overflow-hidden border border-[#171B28] bg-[#10131C] shadow-2xl shadow-black/60">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#10131C] via-[#10131C]/70 to-transparent z-10" />
-                  <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=1000')] bg-cover bg-center" />
+                <div className={`relative h-56 w-full rounded-2xl overflow-hidden border shadow-lg ${
+                  isLight
+                    ? 'border-slate-200 bg-white text-slate-900 shadow-slate-100'
+                    : 'border-[#242428] bg-[#141416] text-white shadow-2xl shadow-black/60'
+                }`}>
+                  <div className={`absolute inset-0 z-10 ${
+                    isLight
+                      ? 'bg-gradient-to-r from-white via-white/85 to-transparent'
+                      : 'bg-gradient-to-r from-[#10131C] via-[#10131C]/70 to-transparent'
+                  }`} />
+                  <div className="absolute inset-0 opacity-25 bg-[url('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=1000')] bg-cover bg-center" />
                   <div className="relative z-20 p-6 h-full flex flex-col justify-center">
-                    <span className="bg-[#FF2ED1] text-black text-[10px] font-black px-2 py-0.5 rounded-sm w-fit mb-2 uppercase tracking-tighter">
+                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full w-fit mb-2 uppercase tracking-wider ${
+                      isLight ? 'bg-slate-900 text-white' : 'bg-[#CCFF00] text-black'
+                    }`}>
                       Featured Mix
                     </span>
-                    <h2 className="text-3xl sm:text-4xl font-black italic tracking-tighter leading-none mb-2 uppercase text-[#F7F8FC]">
+                    <h2 className={`text-3xl sm:text-4xl font-black italic tracking-tighter leading-none mb-2 uppercase ${
+                      isLight ? 'text-slate-900' : 'text-[#F7F8FC]'
+                    }`}>
                       Electric Dreams
                     </h2>
-                    <p className="text-[#9CA3B7] text-xs sm:text-sm max-w-xs sm:max-w-md mb-4 line-clamp-2">
-                      The definitive cyberpunk soundscape for your digital journey. Updated every cycle.
+                    <p className={`text-xs sm:text-sm max-w-xs sm:max-w-md mb-4 line-clamp-2 font-medium ${
+                      isLight ? 'text-slate-600' : 'text-[#9CA3B7]'
+                    }`}>
+                      The definitive high-octane soundscape for your digital journey. Updated continuously.
                     </p>
                     <div className="flex gap-3">
                       <button
@@ -1069,13 +1133,21 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                           const trk = tracks.find((t) => t.title.toLowerCase().includes('electric')) || tracks[0];
                           handleSelectTrack(trk);
                         }}
-                        className="bg-[#00F5FF] text-[#07090F] font-bold px-6 py-2 rounded-full text-xs uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md shadow-[#00F5FF]/20 cursor-pointer"
+                        className={`font-black px-6 py-2 rounded-full text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer ${
+                          isLight
+                            ? 'bg-slate-900 text-white shadow-slate-900/20 hover:bg-slate-800'
+                            : 'bg-[#CCFF00] text-black shadow-[#CCFF00]/25 hover:brightness-110'
+                        } active:scale-95`}
                       >
                         Play Now
                       </button>
                       <button
                         onClick={() => setCurrentScreen('library')}
-                        className="bg-[#171B28] border border-[#61697C] text-[#F7F8FC] font-bold px-6 py-2 rounded-full text-xs uppercase tracking-wider hover:border-white transition-colors cursor-pointer"
+                        className={`font-bold px-6 py-2 rounded-full text-xs uppercase tracking-wider transition-colors cursor-pointer border ${
+                          isLight
+                            ? 'bg-slate-100 border-slate-300 text-slate-800 hover:bg-slate-200'
+                            : 'bg-[#242428] border-[#36363C] text-white hover:border-white'
+                        }`}
                       >
                         Library
                       </button>
@@ -1089,53 +1161,77 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                 {/* Cyber DJ Card */}
                 <div
                   onClick={() => setCurrentScreen('cyber_dj')}
-                  className="p-4 rounded-2xl bg-gradient-to-br from-[#1A102F] to-[#0E131F] border border-[#8B5CFF]/40 hover:border-[#8B5CFF] transition-all cursor-pointer group shadow-lg shadow-black/40 flex items-center justify-between"
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer group shadow-sm flex items-center justify-between ${
+                    isLight
+                      ? 'bg-white border-slate-200 hover:border-slate-400'
+                      : 'bg-[#141416] border-[#242428] hover:border-[#CCFF00]/50'
+                  }`}
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-[#8B5CFF]/20 text-[#8B5CFF] border border-[#8B5CFF]/50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${
+                      isLight ? 'bg-slate-100 text-slate-900' : 'bg-[#CCFF00]/15 text-[#CCFF00] border border-[#CCFF00]/30'
+                    }`}>
                       <Radio className="w-6 h-6" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-white group-hover:text-[#00F5FF] transition-colors">
-                          Cyber DJ
+                        <h4 className={`text-sm font-bold transition-colors ${
+                          isLight ? 'text-slate-900 group-hover:text-slate-600' : 'text-white group-hover:text-[#CCFF00]'
+                        }`}>
+                          Smart DJ Flow
                         </h4>
-                        <span className="text-[9px] bg-[#00F5FF]/15 text-[#00F5FF] border border-[#00F5FF]/40 px-1.5 py-0.2 rounded-full font-bold uppercase">
-                          Live Flow
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                          isLight ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-[#CCFF00]/15 text-[#CCFF00] border border-[#CCFF00]/40'
+                        }`}>
+                          Live
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#9CA3B7] mt-0.5">
+                      <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-[#9CA3B7]'}`}>
                         Continuous adaptive queue • Drive, Workout, Chill
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-[#9CA3B7] group-hover:text-[#00F5FF] transition-colors" />
+                  <ChevronRight className={`w-4 h-4 transition-colors ${
+                    isLight ? 'text-slate-400 group-hover:text-slate-900' : 'text-[#9CA3B7] group-hover:text-[#CCFF00]'
+                  }`} />
                 </div>
 
                 {/* AI Playlist Generator Card */}
                 <div
                   onClick={() => setCurrentScreen('ai_playlist')}
-                  className="p-4 rounded-2xl bg-gradient-to-br from-[#091C29] to-[#0E131F] border border-[#00F5FF]/40 hover:border-[#00F5FF] transition-all cursor-pointer group shadow-lg shadow-black/40 flex items-center justify-between"
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer group shadow-sm flex items-center justify-between ${
+                    isLight
+                      ? 'bg-white border-slate-200 hover:border-slate-400'
+                      : 'bg-[#141416] border-[#242428] hover:border-[#CCFF00]/50'
+                  }`}
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-[#00F5FF]/20 text-[#00F5FF] border border-[#00F5FF]/50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${
+                      isLight ? 'bg-slate-100 text-slate-900' : 'bg-[#CCFF00]/15 text-[#CCFF00] border border-[#CCFF00]/30'
+                    }`}>
                       <Sparkles className="w-6 h-6" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-white group-hover:text-[#00F5FF] transition-colors">
-                          AI Playlist Generator
+                        <h4 className={`text-sm font-bold transition-colors ${
+                          isLight ? 'text-slate-900 group-hover:text-slate-600' : 'text-white group-hover:text-[#CCFF00]'
+                        }`}>
+                          AI Playlist Creator
                         </h4>
-                        <span className="text-[9px] bg-[#8B5CFF]/15 text-[#8B5CFF] border border-[#8B5CFF]/40 px-1.5 py-0.2 rounded-full font-bold uppercase">
-                          AI Studio
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                          isLight ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-[#CCFF00]/15 text-[#CCFF00] border border-[#CCFF00]/40'
+                        }`}>
+                          Studio
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#9CA3B7] mt-0.5">
+                      <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-[#9CA3B7]'}`}>
                         Prompt to verified playable tracklists
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-[#9CA3B7] group-hover:text-[#00F5FF] transition-colors" />
+                  <ChevronRight className={`w-4 h-4 transition-colors ${
+                    isLight ? 'text-slate-400 group-hover:text-slate-900' : 'text-[#9CA3B7] group-hover:text-[#CCFF00]'
+                  }`} />
                 </div>
               </div>
 
@@ -2185,21 +2281,43 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           {/* SCREEN: PROFILE */}
           {currentScreen === 'profile' && (
             <div className="p-4 space-y-5">
-              <h1 className="text-2xl font-black uppercase tracking-tight text-[#F7F8FC]">Profile</h1>
+              <h1 className={`text-2xl font-black uppercase tracking-tight ${
+                isLight ? 'text-slate-900' : 'text-[#F7F8FC]'
+              }`}>Profile</h1>
 
               {/* User Profile Card */}
-              <div className="p-4 rounded-2xl border border-[#171B28] bg-[#10131C]/90 backdrop-blur-xl shadow-2xl shadow-black space-y-4">
+              <div className={`p-4 rounded-2xl border transition-all space-y-4 ${
+                isLight
+                  ? 'bg-white border-slate-200 shadow-sm'
+                  : 'border-[#171B28] bg-[#10131C]/90 backdrop-blur-xl shadow-2xl shadow-black'
+              }`}>
                 <div className="flex items-center gap-3.5">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#00F5FF] via-[#8B5CFF] to-[#FF2ED1] p-[2px] shadow-lg shadow-[#00F5FF]/20">
-                    <div className="w-full h-full rounded-full bg-[#07090F] flex items-center justify-center font-black text-[#00F5FF] text-lg">
-                      {displayName.substring(0, 2).toUpperCase()}
+                  <div className={`w-14 h-14 rounded-full p-[2px] flex items-center justify-center shadow-md shrink-0 ${
+                    isLight
+                      ? 'bg-slate-300 ring-2 ring-slate-200'
+                      : 'bg-gradient-to-br from-[#00F5FF] via-[#8B5CFF] to-[#FF2ED1] shadow-[#00F5FF]/20'
+                  }`}>
+                    <div className={`w-full h-full rounded-full flex items-center justify-center font-black text-lg sona-avatar ${
+                      isLight
+                        ? 'bg-slate-900 text-white shadow-inner'
+                        : 'bg-[#07090F] text-[#00F5FF]'
+                    }`}>
+                      <span className="sona-avatar-text">{displayName.substring(0, 2).toUpperCase()}</span>
                     </div>
                   </div>
                   <div>
-                    <div className="text-base font-black uppercase text-[#F7F8FC]">{displayName}</div>
-                    <div className="text-xs text-[#9CA3B7]">
+                    <div className={`text-base font-black uppercase ${
+                      isLight ? 'text-slate-900' : 'text-[#F7F8FC]'
+                    }`}>{displayName}</div>
+                    <div className={`text-xs ${
+                      isLight ? 'text-slate-500' : 'text-[#9CA3B7]'
+                    }`}>
                       @sona_listener •{' '}
-                      <span className={`font-bold ${isProUser ? 'text-[#FF2ED1]' : 'text-[#00F5FF]'}`}>
+                      <span className={`font-bold ${
+                        isProUser
+                          ? isLight ? 'text-emerald-700' : 'text-[#FF2ED1]'
+                          : isLight ? 'text-slate-800' : 'text-[#00F5FF]'
+                      }`}>
                         {isProUser ? 'Sona Pro' : 'Free Plan'}
                       </span>
                     </div>
@@ -2207,17 +2325,50 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#171B28] text-center">
-                  <div>
-                    <div className="text-sm font-black text-[#F7F8FC]">{(DEMO_PLAYLISTS || []).length}</div>
+                <div className={`grid grid-cols-3 gap-2 pt-2 border-t text-center ${
+                  isLight ? 'border-slate-200' : 'border-[#171B28]'
+                }`}>
+                  <div
+                    onClick={() =>
+                      handleOpenSection({
+                        title: 'All Playlists',
+                        subtitle: 'All curated mixes and user playlists',
+                        type: 'playlists',
+                        items: DEMO_PLAYLISTS,
+                        badgeText: 'Playlists',
+                      })
+                    }
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    <div className={`text-sm font-black ${isLight ? 'text-slate-900' : 'text-[#F7F8FC]'}`}>
+                      {(DEMO_PLAYLISTS || []).length}
+                    </div>
                     <div className="text-[10px] text-[#9CA3B7] uppercase tracking-wider">Playlists</div>
                   </div>
-                  <div>
-                    <div className="text-sm font-black text-[#F7F8FC]">{(tracks || []).filter((t) => t?.isLiked).length}</div>
+                  <div
+                    onClick={() => setCurrentScreen('liked_songs')}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    <div className={`text-sm font-black ${isLight ? 'text-slate-900' : 'text-[#F7F8FC]'}`}>
+                      {(tracks || []).filter((t) => t?.isLiked).length}
+                    </div>
                     <div className="text-[10px] text-[#9CA3B7] uppercase tracking-wider">Liked Songs</div>
                   </div>
-                  <div>
-                    <div className="text-sm font-black text-[#F7F8FC]">{(DEMO_ARTISTS || []).length}</div>
+                  <div
+                    onClick={() =>
+                      handleOpenSection({
+                        title: 'All Artists',
+                        subtitle: 'Followed artists and vocalists',
+                        type: 'artists',
+                        items: DEMO_ARTISTS,
+                        badgeText: 'Artists',
+                      })
+                    }
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    <div className={`text-sm font-black ${isLight ? 'text-slate-900' : 'text-[#F7F8FC]'}`}>
+                      {(DEMO_ARTISTS || []).length}
+                    </div>
                     <div className="text-[10px] text-[#9CA3B7] uppercase tracking-wider">Artists</div>
                   </div>
                 </div>
@@ -2225,7 +2376,9 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
 
               {/* Menu Options */}
               <div className="space-y-1">
-                <div className="text-xs font-bold uppercase tracking-wider text-[#9CA3B7] mb-2">Preferences & System</div>
+                <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${
+                  isLight ? 'text-slate-500' : 'text-[#9CA3B7]'
+                }`}>Preferences & System</div>
                 {[
                   { label: 'Account & Subscription', action: () => setIsSubscriptionModalOpen(true) },
                   { label: 'Listening Stats & Trends', action: () => setCurrentScreen('listening_stats') },
@@ -2237,7 +2390,11 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                   <div
                     key={item.label}
                     onClick={item.action}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-[#10131C]/80 border border-transparent hover:border-[#171B28] cursor-pointer text-xs font-bold text-[#F7F8FC] transition-colors"
+                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer text-xs font-bold transition-colors ${
+                      isLight
+                        ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
+                        : 'bg-[#10131C]/80 border-transparent hover:border-[#171B28] text-[#F7F8FC]'
+                    }`}
                   >
                     <span>{item.label}</span>
                     <ChevronRight className="w-4 h-4 text-[#61697C]" />
@@ -2300,6 +2457,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                     setSelectedAlbumId(albumId);
                     setCurrentScreen('album_detail');
                   }}
+                  theme={preferences.theme}
                 />
               );
             })()
@@ -2318,6 +2476,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                     setSelectedArtistId(artistId);
                     setCurrentScreen('artist_detail');
                   }}
+                  theme={preferences.theme}
                 />
               );
             })()
@@ -2345,6 +2504,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
               onPlayTrack={handleSelectTrack}
               currentTrack={currentTrack}
               isPlaying={isPlaying}
+              theme={preferences.theme}
             />
           )}
 
@@ -2352,6 +2512,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
             <AiPlaylistView
               onBack={() => setCurrentScreen('home')}
               onPlayTrack={handleSelectTrack}
+              theme={preferences.theme}
             />
           )}
 
@@ -2376,113 +2537,217 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
               onToggleLike={handleToggleLike}
               onPlayViaYouTube={handlePlayViaYouTube}
               currentTrackId={currentTrack?.id}
+              theme={preferences.theme}
             />
           )}
         </main>
 
-        {/* Persistent Mini Player (Docked above Bottom Nav) - Frosted Glass Design */}
-        {currentScreen !== 'onboarding' && (
+        {/* Persistent Mini Player (Docked above Bottom Nav) - Only visible once user has played a song */}
+        {hasStartedPlayback && currentTrack && currentScreen !== 'onboarding' && !isNowPlayingOpen && (
           <div
             onClick={() => setIsNowPlayingOpen(true)}
-            className={`absolute bottom-20 left-3 right-3 sm:left-4 sm:right-4 h-16 bg-[#10131C]/90 backdrop-blur-xl border rounded-2xl flex items-center px-3 sm:px-4 z-30 shadow-2xl shadow-black cursor-pointer transition-all ${
-              currentTrack.source === 'SPOTIFY'
-                ? 'border-[#1DB954]/40 hover:border-[#1DB954]/80'
-                : currentTrack.source === 'YOUTUBE'
-                ? 'border-red-500/40 hover:border-red-500/80'
-                : 'border-[#00F5FF]/20 hover:border-[#00F5FF]/50'
+            className={`sona-mini-player absolute bottom-20 left-3 right-3 sm:left-4 sm:right-4 h-16 rounded-2xl flex items-center px-3 sm:px-3.5 z-30 cursor-pointer transition-all duration-300 select-none shadow-xl ${
+              isLight
+                ? 'bg-white/95 backdrop-blur-2xl border border-slate-200/90 text-slate-900 shadow-[0_10px_25px_-4px_rgba(15,23,42,0.1),0_4px_6px_-2px_rgba(15,23,42,0.05)] hover:border-slate-300'
+                : 'bg-[#121216]/95 backdrop-blur-2xl border border-[#272730] text-white shadow-[0_12px_36px_rgba(0,0,0,0.85)] hover:border-[#3A3A46]'
             }`}
           >
-            {/* Album thumbnail */}
-            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-[#00F5FF]/20 mr-3 shadow-md shadow-black relative bg-black">
+            {/* 0. Album thumbnail */}
+            <div
+              className={`w-11 h-11 rounded-xl overflow-hidden shrink-0 mr-3 relative ${
+                isLight
+                  ? 'border border-slate-200/80 shadow-sm bg-slate-100'
+                  : 'border border-white/10 shadow-md shadow-black/50 bg-black'
+              }`}
+            >
               <CyberArtwork keyName={currentTrack.placeholderArtworkKey} artworkUrl={currentTrack.artworkUrl} />
               {currentTrack.source === 'YOUTUBE' && (
-                <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-600 rounded-full flex items-center justify-center">
+                <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-600 rounded-full flex items-center justify-center shadow-xs">
                   <Youtube className="w-2 h-2 text-white fill-current" />
                 </div>
               )}
               {currentTrack.source === 'SPOTIFY' && (
-                <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-[#1DB954] rounded-full flex items-center justify-center">
+                <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-[#1DB954] rounded-full flex items-center justify-center shadow-xs">
                   <Music className="w-2 h-2 text-black" />
                 </div>
               )}
             </div>
 
-            {/* Track Info */}
+            {/* 1. Track Info (Title & Artist) */}
             <div className="flex-1 min-w-0 pr-2">
-              <div className="text-xs font-black uppercase text-[#F7F8FC] truncate">{currentTrack.title}</div>
-              <div className="text-[10px] uppercase text-[#00F5FF] font-bold truncate flex items-center gap-1.5">
-                <span>{currentTrack.artist}</span>
-                {currentTrack.source === 'YOUTUBE' && (
-                  <span className="text-[8px] bg-red-950 text-red-400 border border-red-800/40 px-1 py-0 rounded font-mono">
-                    YT LIVE
-                  </span>
-                )}
-                {currentTrack.source === 'SPOTIFY' && (
-                  <span className="text-[8px] bg-[#1DB954]/20 text-[#1DB954] border border-[#1DB954]/40 px-1 py-0 rounded font-mono">
-                    SPOTIFY LIVE
+              <div
+                className={`sona-mini-title text-xs sm:text-sm font-bold tracking-tight truncate ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}
+              >
+                {currentTrack.title}
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span
+                  className={`sona-mini-artist text-[11px] font-medium truncate ${
+                    isLight ? 'text-slate-500' : 'text-zinc-400'
+                  }`}
+                >
+                  {currentTrack.artist}
+                </span>
+                {isPlaying && (
+                  <span className="inline-flex items-end gap-[2px] h-2.5 shrink-0 ml-0.5" title="Playing">
+                    <span
+                      className={`w-[2px] rounded-full animate-bounce ${isLight ? 'bg-slate-800' : ''}`}
+                      style={{
+                        height: '100%',
+                        animationDuration: '0.6s',
+                        backgroundColor: isLight ? undefined : nrcAccentHex,
+                      }}
+                    />
+                    <span
+                      className={`w-[2px] rounded-full animate-bounce ${isLight ? 'bg-slate-800' : ''}`}
+                      style={{
+                        height: '60%',
+                        animationDuration: '0.8s',
+                        animationDelay: '0.15s',
+                        backgroundColor: isLight ? undefined : nrcAccentHex,
+                      }}
+                    />
+                    <span
+                      className={`w-[2px] rounded-full animate-bounce ${isLight ? 'bg-slate-800' : ''}`}
+                      style={{
+                        height: '80%',
+                        animationDuration: '0.5s',
+                        animationDelay: '0.3s',
+                        backgroundColor: isLight ? undefined : nrcAccentHex,
+                      }}
+                    />
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Quick YouTube Button on MiniPlayer */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePlayViaYouTube(currentTrack);
-              }}
-              className="p-1.5 rounded-lg bg-red-600/20 hover:bg-red-600 border border-red-500/30 text-red-400 hover:text-white transition-all mr-1"
-              title="Play YouTube video version"
-            >
-              <Youtube className="w-3.5 h-3.5 fill-current" />
-            </button>
+            {/* 2. Controls & Actions */}
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+              {/* Quick YouTube Mode Toggle Button (Preserving title for continuity selector) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePlayViaYouTube(currentTrack);
+                }}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  isLight
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600 hover:text-red-600'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-400 hover:text-red-400'
+                }`}
+                title="Play YouTube video version"
+              >
+                <Youtube className="w-3.5 h-3.5 fill-current" />
+              </button>
 
-            {/* Controls: Prev, Play, Next */}
-            <div className="flex items-center gap-2 sm:gap-3 px-1">
+              {/* Heart / Favorite Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleLike(currentTrack.id);
+                }}
+                className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+                  isLight ? 'hover:bg-slate-100' : 'hover:bg-white/10'
+                }`}
+                title={currentTrack.isLiked ? 'Unlike' : 'Like'}
+              >
+                <Heart
+                  className={`w-4 h-4 transition-transform active:scale-125 ${
+                    currentTrack.isLiked
+                      ? 'fill-[#FF2ED1] text-[#FF2ED1]'
+                      : isLight
+                      ? 'text-slate-400 hover:text-slate-700'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                />
+              </button>
+
+              {/* Prev Button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePrevTrack();
                 }}
-                className="text-[#9CA3B7] hover:text-[#F7F8FC] transition-colors p-1 cursor-pointer"
+                className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                    : 'text-zinc-300 hover:text-white hover:bg-white/10'
+                }`}
                 title="Previous track"
               >
                 <SkipBack className="w-4 h-4 fill-current" />
               </button>
 
+              {/* Play / Pause Primary Button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   togglePlayPause();
                 }}
-                className="w-9 h-9 rounded-full flex items-center justify-center font-bold bg-[#00F5FF] text-[#07090F] shadow-md shadow-[#00F5FF]/20 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold shadow-md transition-all active:scale-95 cursor-pointer ${
+                  isLight
+                    ? 'bg-slate-900 text-white shadow-slate-900/25 hover:bg-slate-800'
+                    : 'text-black shadow-black/40 hover:brightness-110'
+                }`}
+                style={{
+                  backgroundColor: isLight ? undefined : nrcAccentHex,
+                }}
                 title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? (
-                  <Pause className="w-4 h-4 fill-black" />
+                  <Pause className={`w-4 h-4 ${isLight ? 'fill-white' : 'fill-black'}`} />
                 ) : (
-                  <Play className="w-4 h-4 fill-black ml-0.5" />
+                  <Play className={`w-4 h-4 ml-0.5 ${isLight ? 'fill-white' : 'fill-black'}`} />
                 )}
               </button>
 
+              {/* Next Button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleNextTrack();
                 }}
-                className="text-[#9CA3B7] hover:text-[#F7F8FC] transition-colors p-1 cursor-pointer"
+                className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+                    : 'text-zinc-300 hover:text-white hover:bg-white/10'
+                }`}
                 title="Next track"
               >
                 <SkipForward className="w-4 h-4 fill-current" />
               </button>
+
+              {/* Dismiss / Close Mini Player Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPlaying(false);
+                  setHasStartedPlayback(false);
+                  sendYTCommand('pauseVideo');
+                }}
+                className={`p-1 rounded-full transition-colors cursor-pointer ml-0.5 ${
+                  isLight
+                    ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/10'
+                }`}
+                title="Close player"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            {/* Progress Bar Indicator with Neon Cyan Glow */}
-            <div className="w-16 sm:w-28 h-1 bg-[#171B28] rounded-full overflow-hidden shrink-0 hidden xs:block">
+            {/* Seamless Bottom Progress Bar Edge Indicator */}
+            <div
+              className={`absolute bottom-0 left-3 right-3 h-[2.5px] rounded-full overflow-hidden ${
+                isLight ? 'bg-slate-100' : 'bg-white/10'
+              }`}
+            >
               <div
-                className="h-full bg-[#00F5FF] shadow-[0_0_10px_#00F5FF] transition-all"
+                className={`h-full transition-all duration-300 ${isLight ? 'bg-slate-900' : ''}`}
                 style={{
                   width: `${Math.min(100, (seekSeconds / (currentTrack.durationSeconds || 214)) * 100)}%`,
+                  backgroundColor: isLight ? undefined : nrcAccentHex,
                 }}
               />
             </div>
@@ -2491,15 +2756,27 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
 
         {/* Standard Phone Bottom Navigation Bar - Frosted Glass Design */}
         {!isTabletView && currentScreen !== 'onboarding' && (
-          <nav className="absolute bottom-0 left-0 right-0 h-20 bg-[#10131C]/95 backdrop-blur-xl border-t border-[#171B28] flex items-center justify-around px-4 sm:px-8 z-20">
+          <nav
+            className={`absolute bottom-0 left-0 right-0 h-20 backdrop-blur-xl border-t flex items-center justify-around px-4 sm:px-8 z-20 transition-colors ${
+              isLight
+                ? 'bg-white/95 border-slate-200/90'
+                : 'bg-[#10131C]/95 border-[#171B28]'
+            }`}
+          >
             {navItems.map(({ id, label, icon: IconComponent }) => {
               const active = currentScreen === id;
               return (
                 <button
                   key={id}
                   onClick={() => setCurrentScreen(id as ScreenType)}
-                  className={`flex flex-col items-center gap-1 transition-colors py-1 px-2 ${
-                    active ? 'text-[#00F5FF]' : 'text-[#61697C] hover:text-[#9CA3B7]'
+                  className={`flex flex-col items-center gap-1 transition-colors py-1 px-2 cursor-pointer ${
+                    active
+                      ? isLight
+                        ? 'text-slate-950 font-black'
+                        : 'text-[#CCFF00] font-black'
+                      : isLight
+                      ? 'text-slate-400 hover:text-slate-700'
+                      : 'text-[#61697C] hover:text-[#9CA3B7]'
                   }`}
                 >
                   <IconComponent className="w-5 h-5" />
@@ -2550,13 +2827,19 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
 
           {/* 2 MAIN PLAYER CHOICES: Audio Only vs Music Video */}
           <div className="flex flex-col items-center justify-center gap-2 my-1 relative z-10">
-            <div className="inline-flex p-1 rounded-full bg-[#10131C] border border-[#171B28] shadow-inner">
+            <div className={`inline-flex p-1 rounded-full border shadow-inner ${
+              isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#10131C] border-[#171B28]'
+            }`}>
               <button
                 onClick={() => setPlaybackMediaMode('audio')}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                   playbackMediaMode === 'audio'
-                    ? 'bg-[#00F5FF] text-[#07090F] shadow-md shadow-[#00F5FF]/30 font-black'
-                    : 'text-[#9CA3B7] hover:text-white'
+                    ? isLight
+                      ? 'bg-slate-900 text-white shadow-sm font-black'
+                      : 'bg-[#CCFF00] text-black font-black shadow-md shadow-[#CCFF00]/30'
+                    : isLight
+                    ? 'text-slate-600 hover:text-slate-900'
+                    : 'text-[#8E8E93] hover:text-white'
                 }`}
               >
                 <Volume2 className="w-3.5 h-3.5" />
@@ -2566,8 +2849,12 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                 onClick={() => setPlaybackMediaMode('video')}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                   playbackMediaMode === 'video'
-                    ? 'bg-[#00F5FF] text-[#07090F] shadow-md shadow-[#00F5FF]/30 font-black'
-                    : 'text-[#9CA3B7] hover:text-white'
+                    ? isLight
+                      ? 'bg-slate-900 text-white shadow-sm font-black'
+                      : 'bg-[#CCFF00] text-black font-black shadow-md shadow-[#CCFF00]/30'
+                    : isLight
+                    ? 'text-slate-600 hover:text-slate-900'
+                    : 'text-[#8E8E93] hover:text-white'
                 }`}
               >
                 <Video className="w-3.5 h-3.5" />
@@ -2577,11 +2864,19 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
 
             {/* Sub-options when in Audio Only: Cover | Visualizer | Lyrics */}
             {playbackMediaMode === 'audio' && (
-              <div className="inline-flex p-0.5 rounded-full bg-[#10131C]/60 border border-[#171B28] animate-in fade-in duration-200">
+              <div className={`inline-flex p-0.5 rounded-full border animate-in fade-in duration-200 ${
+                isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#10131C]/60 border-[#171B28]'
+              }`}>
                 <button
                   onClick={() => setAudioVisualMode('artwork')}
                   className={`px-3 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
-                    audioVisualMode === 'artwork' ? 'bg-[#00F5FF]/20 text-[#00F5FF]' : 'text-[#9CA3B7] hover:text-white'
+                    audioVisualMode === 'artwork'
+                      ? isLight
+                        ? 'bg-slate-900 text-white shadow-sm font-bold'
+                        : 'bg-[#CCFF00] text-black font-black'
+                      : isLight
+                      ? 'text-slate-600 hover:text-slate-900'
+                      : 'text-[#8E8E93] hover:text-white'
                   }`}
                 >
                   Cover
@@ -2589,7 +2884,13 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                 <button
                   onClick={() => setAudioVisualMode('visualizer')}
                   className={`px-3 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
-                    audioVisualMode === 'visualizer' ? 'bg-[#00F5FF]/20 text-[#00F5FF]' : 'text-[#9CA3B7] hover:text-white'
+                    audioVisualMode === 'visualizer'
+                      ? isLight
+                        ? 'bg-slate-900 text-white shadow-sm font-bold'
+                        : 'bg-[#CCFF00] text-black font-black'
+                      : isLight
+                      ? 'text-slate-600 hover:text-slate-900'
+                      : 'text-[#8E8E93] hover:text-white'
                   }`}
                 >
                   Visualizer
@@ -2597,7 +2898,13 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                 <button
                   onClick={() => setAudioVisualMode('lyrics')}
                   className={`px-3 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
-                    audioVisualMode === 'lyrics' ? 'bg-[#00F5FF]/20 text-[#00F5FF]' : 'text-[#9CA3B7] hover:text-white'
+                    audioVisualMode === 'lyrics'
+                      ? isLight
+                        ? 'bg-slate-900 text-white shadow-sm font-bold'
+                        : 'bg-[#CCFF00] text-black font-black'
+                      : isLight
+                      ? 'text-slate-600 hover:text-slate-900'
+                      : 'text-[#8E8E93] hover:text-white'
                   }`}
                 >
                   Lyrics
@@ -2610,7 +2917,9 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           <div className="my-2 relative z-10 flex flex-col items-center justify-center w-full">
             {/* Unified persistent video player: never unmounts, no overlays or buttons on top of video */}
             <div
-              className={`w-full max-w-[320px] sm:max-w-[360px] aspect-video mx-auto rounded-2xl overflow-hidden border-2 border-[#00F5FF]/40 shadow-[0_0_35px_rgba(0,245,255,0.2)] bg-black transition-all ${
+              className={`w-full max-w-[320px] sm:max-w-[360px] aspect-video mx-auto rounded-2xl overflow-hidden border-2 bg-black transition-all ${
+                isLight ? 'border-slate-300 shadow-md' : 'border-[#CCFF00]/40 shadow-[0_0_35px_rgba(204,255,0,0.2)]'
+              } ${
                 playbackMediaMode === 'video'
                   ? 'relative block mb-2'
                   : 'absolute -top-[9999px] left-0 w-1 h-1 opacity-0 pointer-events-none'
@@ -2618,7 +2927,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
             >
               <iframe
                 ref={ytIframeRef}
-                src={`https://www.youtube-nocookie.com/embed/${effectiveYtId}?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&autoplay=1&origin=${encodeURIComponent(
+                src={`https://www.youtube-nocookie.com/embed/${effectiveYtId}?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&autoplay=1&vq=medium&origin=${encodeURIComponent(
                   typeof window !== 'undefined' ? window.location.origin : ''
                 )}`}
                 title={currentTrack.title}
@@ -2631,7 +2940,9 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
             {/* Seamless Audio Only Display: Artwork */}
             {playbackMediaMode === 'audio' && audioVisualMode === 'artwork' && (
               <div className="flex flex-col items-center w-full animate-in fade-in duration-200">
-                <div className="w-full max-w-[260px] sm:max-w-[280px] aspect-square mx-auto rounded-3xl overflow-hidden border-2 border-[#00F5FF]/40 shadow-[0_0_35px_rgba(0,245,255,0.2)] relative group">
+                <div className={`w-full max-w-[260px] sm:max-w-[280px] aspect-square mx-auto rounded-3xl overflow-hidden border-2 relative group shadow-xl ${
+                  isLight ? 'border-slate-300 shadow-slate-200' : 'border-[#CCFF00]/40 shadow-[0_0_35px_rgba(204,255,0,0.2)]'
+                }`}>
                   <CyberArtwork
                     keyName={currentTrack.placeholderArtworkKey}
                     artworkUrl={currentTrack.artworkUrl}
@@ -2662,6 +2973,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
                 track={currentTrack}
                 currentSeconds={seekSeconds}
                 isPlaying={isPlaying}
+                theme={preferences.theme}
                 onSeek={(s) => handleSeek(s)}
                 onTogglePlayPause={togglePlayPause}
               />
@@ -2671,16 +2983,28 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           {/* Track Meta & Like */}
           <div className="flex items-center justify-between mt-3 mb-2 relative z-10 px-1">
             <div className="min-w-0 pr-3">
-              <div className="text-lg sm:text-xl font-black uppercase text-[#F7F8FC] truncate">{currentTrack.title}</div>
-              <div className="text-xs font-bold uppercase text-[#00F5FF] tracking-wider truncate">{currentTrack.artist}</div>
+              <div className={`text-lg sm:text-xl font-black uppercase truncate ${
+                isLight ? 'text-slate-900' : 'text-[#F7F8FC]'
+              }`}>
+                {currentTrack.title}
+              </div>
+              <div className={`text-xs font-bold uppercase tracking-wider truncate ${
+                isLight ? 'text-slate-500' : 'text-[#CCFF00]'
+              }`}>
+                {currentTrack.artist}
+              </div>
             </div>
             <button
               onClick={() => handleToggleLike(currentTrack.id)}
-              className="p-1.5 text-[#9CA3B7] hover:text-[#FF2ED1] transition-colors"
+              className="p-1.5 transition-colors cursor-pointer"
             >
               <Heart
                 className={`w-6 h-6 sm:w-7 sm:h-7 ${
-                  currentTrack.isLiked ? 'fill-[#FF2ED1] text-[#FF2ED1]' : 'text-[#9CA3B7]'
+                  currentTrack.isLiked
+                    ? 'fill-[#FF2ED1] text-[#FF2ED1]'
+                    : isLight
+                    ? 'text-slate-400 hover:text-slate-700'
+                    : 'text-[#9CA3B7] hover:text-white'
                 }`}
               />
             </button>
@@ -2694,13 +3018,15 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
               max={currentTrack.durationSeconds || 214}
               value={seekSeconds}
               onChange={(e) => handleSeek(Number(e.target.value))}
-              className="w-full h-1.5 bg-[#171B28] rounded-lg appearance-none cursor-pointer accent-[#00F5FF]"
+              className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer ${
+                isLight ? 'bg-slate-200 accent-slate-900' : 'bg-[#171B28] accent-[#CCFF00]'
+              }`}
             />
-            <div className="flex justify-between text-[11px] font-mono text-[#9CA3B7]">
-              <span>{`${Math.floor(seekSeconds / 60)}:${String(seekSeconds % 60).padStart(2, '0')}`}</span>
-              <span>{`${Math.floor((currentTrack.durationSeconds || 214) / 60)}:${String(
-                (currentTrack.durationSeconds || 214) % 60
-              ).padStart(2, '0')}`}</span>
+            <div className={`flex justify-between text-[11px] font-mono ${
+              isLight ? 'text-slate-500' : 'text-[#9CA3B7]'
+            }`}>
+              <span>{formatClock(seekSeconds)}</span>
+              <span>{formatClock(currentTrack.durationSeconds || 214)}</span>
             </div>
           </div>
 
@@ -2708,30 +3034,46 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
           <div className="flex items-center justify-between py-3 max-w-xs mx-auto w-full relative z-10">
             <button
               onClick={() => setIsShuffle(!isShuffle)}
-              className={`p-1.5 transition-colors ${isShuffle ? 'text-[#00F5FF]' : 'text-[#61697C]'}`}
+              className={`p-1.5 transition-colors cursor-pointer ${
+                isShuffle
+                  ? isLight
+                    ? 'text-slate-900'
+                    : 'text-[#CCFF00]'
+                  : isLight
+                  ? 'text-slate-400 hover:text-slate-700'
+                  : 'text-[#61697C]'
+              }`}
             >
               <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={handlePrevTrack}
-              className="p-1.5 text-[#F7F8FC] hover:text-[#00F5FF] transition-colors"
+              className={`p-1.5 transition-colors cursor-pointer ${
+                isLight ? 'text-slate-800 hover:text-slate-950' : 'text-[#F7F8FC] hover:text-[#CCFF00]'
+              }`}
             >
               <SkipBack className="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
             </button>
             <button
               onClick={togglePlayPause}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold bg-[#00F5FF] text-[#07090F] shadow-lg shadow-[#00F5FF]/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold transition-all shadow-lg active:scale-95 cursor-pointer ${
+                isLight
+                  ? 'bg-slate-900 text-white shadow-slate-900/20 hover:bg-slate-800'
+                  : 'bg-[#CCFF00] text-black shadow-[#CCFF00]/30 hover:brightness-110'
+              }`}
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? (
-                <Pause className="w-5 h-5 sm:w-6 sm:h-6 fill-[#07090F]" />
+                <Pause className={`w-5 h-5 sm:w-6 sm:h-6 ${isLight ? 'fill-white' : 'fill-black'}`} />
               ) : (
-                <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-[#07090F] ml-0.5" />
+                <Play className={`w-5 h-5 sm:w-6 sm:h-6 ml-0.5 ${isLight ? 'fill-white' : 'fill-black'}`} />
               )}
             </button>
             <button
               onClick={handleNextTrack}
-              className="p-1.5 text-[#F7F8FC] hover:text-[#00F5FF] transition-colors"
+              className={`p-1.5 transition-colors cursor-pointer ${
+                isLight ? 'text-slate-800 hover:text-slate-950' : 'text-[#F7F8FC] hover:text-[#CCFF00]'
+              }`}
             >
               <SkipForward className="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
             </button>
@@ -2919,6 +3261,7 @@ export const CyberPulseApp: React.FC<CyberPulseAppProps> = ({
       <SubscriptionModal
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
+        theme={preferences.theme}
         isProUser={isProUser}
         onUpgradeSuccess={() => {
           setIsProUser(true);

@@ -24,6 +24,7 @@ interface SectionDetailViewProps {
   onToggleLike?: (trackId: string) => void;
   onPlayViaYouTube?: (track: Track) => void;
   currentTrackId?: string;
+  theme?: string;
 }
 
 export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
@@ -35,8 +36,10 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
   onSelectAlbum,
   onToggleLike,
   onPlayViaYouTube,
-  currentTrackId
+  currentTrackId,
+  theme = 'stealth_athletic',
 }) => {
+  const isLight = theme === 'pure_light';
   const [filterText, setFilterText] = useState('');
 
   const items = Array.isArray(config.items) ? config.items : [];
@@ -63,16 +66,22 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
   };
 
   return (
-    <div className="p-4 space-y-5 pb-32 animate-in fade-in duration-200">
+    <div className={`p-4 space-y-5 pb-32 animate-in fade-in duration-200 ${isLight ? 'text-slate-900' : 'text-white'}`}>
       {/* Top Bar Navigation */}
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="w-10 h-10 rounded-full bg-[#10131C] border border-[#171B28] flex items-center justify-center text-[#9CA3B7] hover:text-[#F7F8FC] hover:border-[#00F5FF]/50 transition-colors cursor-pointer"
+          className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${
+            isLight
+              ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+              : 'bg-[#10131C] border-[#171B28] text-[#9CA3B7] hover:text-[#F7F8FC] hover:border-[#00F5FF]/50'
+          }`}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <span className="text-xs font-mono tracking-widest text-[#00F5FF] uppercase font-bold">
+        <span className={`text-xs font-mono tracking-widest uppercase font-bold ${
+          isLight ? 'text-slate-700' : 'text-[#00F5FF]'
+        }`}>
           {config.badgeText || 'Sona Collection'}
         </span>
         <div className="w-10" />
@@ -80,11 +89,15 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
 
       {/* Hero Banner */}
       <div
-        className={`relative rounded-3xl overflow-hidden p-6 border border-white/10 bg-gradient-to-b ${
-          config.gradient || 'from-[#00F5FF]/20 via-[#171B28]/80 to-[#10131C]/90'
-        } backdrop-blur-xl flex flex-col items-center text-center shadow-xl`}
+        className={`relative rounded-3xl overflow-hidden p-6 border flex flex-col items-center text-center shadow-xl transition-all ${
+          isLight
+            ? 'bg-white border-slate-200 shadow-sm'
+            : `border-white/10 bg-gradient-to-b ${config.gradient || 'from-[#00F5FF]/20 via-[#171B28]/80 to-[#10131C]/90'} backdrop-blur-xl`
+        }`}
       >
-        <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl mb-4 relative">
+        <div className={`w-24 h-24 rounded-2xl overflow-hidden border-2 mb-4 relative ${
+          isLight ? 'border-slate-200 shadow-md' : 'border-white/20 shadow-2xl'
+        }`}>
           {config.type === 'tracks' && items.length > 0 ? (
             <CyberArtwork
               artworkUrl={items[0]?.artworkUrl}
@@ -105,21 +118,27 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
               keyName={items[0]?.artworkKey}
             />
           ) : (
-            <div className="w-full h-full bg-[#10131C] flex items-center justify-center">
-              <Music2 className="w-10 h-10 text-[#00F5FF]" />
+            <div className={`w-full h-full flex items-center justify-center ${isLight ? 'bg-slate-100 text-slate-800' : 'bg-[#10131C] text-[#00F5FF]'}`}>
+              <Music2 className="w-10 h-10" />
             </div>
           )}
         </div>
 
-        <h1 className="text-2xl font-black uppercase tracking-tight text-[#F7F8FC] mb-1">
+        <h1 className={`text-2xl font-black uppercase tracking-tight mb-1 ${
+          isLight ? 'text-slate-900' : 'text-[#F7F8FC]'
+        }`}>
           {config.title}
         </h1>
 
-        <p className="text-xs text-[#9CA3B7] leading-relaxed mb-4 max-w-sm">
+        <p className={`text-xs leading-relaxed mb-4 max-w-sm ${
+          isLight ? 'text-slate-600' : 'text-[#9CA3B7]'
+        }`}>
           {config.subtitle}
         </p>
 
-        <div className="text-[11px] font-mono text-[#00F5FF] mb-4">
+        <div className={`text-[11px] font-mono mb-4 font-bold ${
+          isLight ? 'text-slate-500' : 'text-[#00F5FF]'
+        }`}>
           {items.length} {items.length === 1 ? 'item' : 'items'} available
         </div>
 
@@ -128,14 +147,22 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
           <div className="flex items-center gap-3 w-full justify-center">
             <button
               onClick={handlePlayAll}
-              className="px-6 py-2.5 rounded-full bg-[#00F5FF] text-black text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-[#00F5FF]/20 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+              className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg active:scale-95 transition-all cursor-pointer ${
+                isLight
+                  ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20'
+                  : 'bg-[#00F5FF] text-black shadow-[#00F5FF]/20 hover:brightness-110'
+              }`}
             >
               <Play className="w-4 h-4 fill-current ml-0.5" />
               Play All
             </button>
             <button
               onClick={handleShuffle}
-              className="px-4 py-2.5 rounded-full border border-[#171B28] bg-[#10131C] text-[#F7F8FC] text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:border-[#00F5FF]/50 transition-all cursor-pointer"
+              className={`px-4 py-2.5 rounded-full border text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+                isLight
+                  ? 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200 hover:text-slate-950'
+                  : 'border-[#171B28] bg-[#10131C] text-[#F7F8FC] hover:border-[#00F5FF]/50'
+              }`}
             >
               <Shuffle className="w-4 h-4" />
               Shuffle
@@ -147,13 +174,19 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
       {/* Quick Search Filter */}
       {items.length > 4 && (
         <div className="relative">
-          <Search className="w-4 h-4 text-[#61697C] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${
+            isLight ? 'text-slate-400' : 'text-[#61697C]'
+          }`} />
           <input
             type="text"
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             placeholder={`Filter in ${config.title.toLowerCase()}...`}
-            className="w-full py-2.5 pl-10 pr-4 bg-[#10131C] border border-[#171B28] focus:border-[#00F5FF] rounded-xl text-xs text-[#F7F8FC] placeholder-[#61697C] outline-none transition-colors"
+            className={`w-full py-2.5 pl-10 pr-4 rounded-xl text-xs outline-none transition-colors border ${
+              isLight
+                ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-slate-400 shadow-sm'
+                : 'bg-[#10131C] border-[#171B28] focus:border-[#00F5FF] text-[#F7F8FC] placeholder-[#61697C]'
+            }`}
           />
         </div>
       )}
@@ -169,15 +202,23 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
                 onClick={() => onSelectTrack(track)}
                 className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer group ${
                   isPlaying
-                    ? 'bg-[#00F5FF]/10 border-[#00F5FF]'
+                    ? isLight
+                      ? 'bg-slate-100 border-slate-400 shadow-sm'
+                      : 'bg-[#00F5FF]/10 border-[#00F5FF]'
+                    : isLight
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 shadow-sm'
                     : 'bg-[#10131C]/60 hover:bg-[#10131C] border-[#171B28] hover:border-[#00F5FF]/40'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-5 text-center text-xs font-mono text-[#61697C] font-bold">
+                  <span className={`w-5 text-center text-xs font-mono font-bold ${
+                    isLight ? 'text-slate-400' : 'text-[#61697C]'
+                  }`}>
                     {idx + 1}
                   </span>
-                  <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#171B28] shadow-md relative">
+                  <div className={`w-12 h-12 rounded-xl overflow-hidden shrink-0 border shadow-md relative ${
+                    isLight ? 'border-slate-200' : 'border-[#171B28]'
+                  }`}>
                     <CyberArtwork
                       artworkUrl={track.artworkUrl}
                       title={track.title}
@@ -186,15 +227,19 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
                     />
                     {isPlaying && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#00F5FF] animate-ping" />
+                        <div className={`w-2.5 h-2.5 rounded-full animate-ping ${isLight ? 'bg-slate-900' : 'bg-[#00F5FF]'}`} />
                       </div>
                     )}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#F7F8FC] truncate group-hover:text-[#00F5FF] transition-colors">
+                    <div className={`text-xs font-bold truncate transition-colors ${
+                      isLight ? 'text-slate-900 group-hover:text-slate-950' : 'text-[#F7F8FC] group-hover:text-[#00F5FF]'
+                    }`}>
                       {track.title}
                     </div>
-                    <div className="text-[11px] text-[#9CA3B7] truncate">
+                    <div className={`text-[11px] truncate ${
+                      isLight ? 'text-slate-500' : 'text-[#9CA3B7]'
+                    }`}>
                       {track.artist} • {track.album}
                     </div>
                   </div>
@@ -208,7 +253,7 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
                         onPlayViaYouTube(track);
                       }}
                       title="Play on YouTube"
-                      className="px-2 py-1 rounded-lg bg-red-600/20 hover:bg-red-600 border border-red-500/40 text-red-400 hover:text-white text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                      className="px-2 py-1 rounded-lg bg-red-600/15 hover:bg-red-600 border border-red-500/40 text-red-600 hover:text-white text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <Youtube className="w-3.5 h-3.5 fill-current" />
                       <span className="hidden sm:inline">Video</span>
@@ -220,7 +265,9 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
                         e.stopPropagation();
                         onToggleLike(track.id);
                       }}
-                      className="p-1.5 rounded-lg text-[#61697C] hover:text-[#FF2ED1] transition-colors cursor-pointer"
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                        isLight ? 'text-slate-400 hover:text-[#FF2ED1]' : 'text-[#61697C] hover:text-[#FF2ED1]'
+                      }`}
                     >
                       <Heart
                         className={`w-4 h-4 ${
@@ -229,7 +276,9 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
                       />
                     </button>
                   )}
-                  <span className="text-[11px] font-mono text-[#61697C]">
+                  <span className={`text-[11px] font-mono ${
+                    isLight ? 'text-slate-400' : 'text-[#61697C]'
+                  }`}>
                     {Math.floor(track.durationSeconds / 60)}:
                     {(track.durationSeconds % 60).toString().padStart(2, '0')}
                   </span>
@@ -246,22 +295,36 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
             <div
               key={pl.id}
               onClick={() => onSelectPlaylist(pl.id)}
-              className="p-3 rounded-2xl bg-[#10131C] border border-[#171B28] hover:border-[#8B5CFF]/60 cursor-pointer flex flex-col gap-2 group transition-all"
+              className={`p-3 rounded-2xl border cursor-pointer flex flex-col gap-2 group transition-all ${
+                isLight
+                  ? 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                  : 'bg-[#10131C] border-[#171B28] hover:border-[#8B5CFF]/60'
+              }`}
             >
-              <div className="aspect-square rounded-xl overflow-hidden relative border border-[#171B28]">
+              <div className={`aspect-square rounded-xl overflow-hidden relative border ${
+                isLight ? 'border-slate-200' : 'border-[#171B28]'
+              }`}>
                 <CyberArtwork
                   artworkUrl={pl.artworkUrl}
                   title={pl.title}
                   keyName={pl.artworkKey}
                 />
-                <div className="absolute bottom-2 left-2 bg-[#10131C]/80 backdrop-blur-md px-2 py-0.5 rounded border border-[#171B28] text-[9px] font-bold text-[#F7F8FC] uppercase tracking-wider">
+                <div className={`absolute bottom-2 left-2 backdrop-blur-md px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-wider ${
+                  isLight
+                    ? 'bg-white/90 border-slate-200 text-slate-800'
+                    : 'bg-[#10131C]/80 border-[#171B28] text-[#F7F8FC]'
+                }`}>
                   {pl.trackCount} tracks
                 </div>
               </div>
-              <div className="text-xs font-bold text-[#F7F8FC] truncate group-hover:text-[#00F5FF]">
+              <div className={`text-xs font-bold truncate ${
+                isLight ? 'text-slate-900 group-hover:text-slate-950' : 'text-[#F7F8FC] group-hover:text-[#00F5FF]'
+              }`}>
                 {pl.title}
               </div>
-              <div className="text-[10px] text-[#9CA3B7] line-clamp-2">
+              <div className={`text-[10px] line-clamp-2 ${
+                isLight ? 'text-slate-500' : 'text-[#9CA3B7]'
+              }`}>
                 {pl.description}
               </div>
             </div>
@@ -275,19 +338,31 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
             <div
               key={artist.id}
               onClick={() => onSelectArtist(artist.id)}
-              className="flex flex-col items-center text-center p-3 rounded-2xl bg-[#10131C] border border-[#171B28] hover:border-[#00F5FF] cursor-pointer group transition-all"
+              className={`flex flex-col items-center text-center p-3 rounded-2xl border cursor-pointer group transition-all ${
+                isLight
+                  ? 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                  : 'bg-[#10131C] border-[#171B28] hover:border-[#00F5FF]'
+              }`}
             >
-              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#171B28] group-hover:border-[#00F5FF] transition-all mb-2 shadow-lg shadow-black">
+              <div className={`w-20 h-20 rounded-full overflow-hidden border-2 transition-all mb-2 ${
+                isLight
+                  ? 'border-slate-200 group-hover:border-slate-400 shadow-md'
+                  : 'border-[#171B28] group-hover:border-[#00F5FF] shadow-lg shadow-black'
+              }`}>
                 <CyberArtwork
                   artworkUrl={artist.artworkUrl}
                   title={artist.name}
                   keyName={artist.artworkKey}
                 />
               </div>
-              <span className="text-xs font-bold text-[#F7F8FC] truncate w-full group-hover:text-[#00F5FF]">
+              <span className={`text-xs font-bold truncate w-full ${
+                isLight ? 'text-slate-900 group-hover:text-slate-950' : 'text-[#F7F8FC] group-hover:text-[#00F5FF]'
+              }`}>
                 {artist.name}
               </span>
-              <span className="text-[10px] text-[#9CA3B7] uppercase tracking-tighter">
+              <span className={`text-[10px] uppercase tracking-tighter ${
+                isLight ? 'text-slate-500' : 'text-[#9CA3B7]'
+              }`}>
                 {(artist.followersCount / 1000).toFixed(0)}k pulses
               </span>
             </div>
@@ -301,9 +376,15 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
             <div
               key={album.id}
               onClick={() => onSelectAlbum(album.id)}
-              className="p-3 rounded-2xl bg-[#10131C] border border-[#171B28] hover:border-[#00F5FF] cursor-pointer flex flex-col gap-2 group transition-all"
+              className={`p-3 rounded-2xl border cursor-pointer flex flex-col gap-2 group transition-all ${
+                isLight
+                  ? 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                  : 'bg-[#10131C] border-[#171B28] hover:border-[#00F5FF]'
+              }`}
             >
-              <div className="aspect-square rounded-xl overflow-hidden border border-[#171B28]">
+              <div className={`aspect-square rounded-xl overflow-hidden border ${
+                isLight ? 'border-slate-200' : 'border-[#171B28]'
+              }`}>
                 <CyberArtwork
                   artworkUrl={album.artworkUrl}
                   title={album.title}
@@ -311,10 +392,14 @@ export const SectionDetailView: React.FC<SectionDetailViewProps> = ({
                   keyName={album.artworkKey}
                 />
               </div>
-              <div className="text-xs font-bold text-[#F7F8FC] truncate group-hover:text-[#00F5FF]">
+              <div className={`text-xs font-bold truncate ${
+                isLight ? 'text-slate-900 group-hover:text-slate-950' : 'text-[#F7F8FC] group-hover:text-[#00F5FF]'
+              }`}>
                 {album.title}
               </div>
-              <div className="text-[10px] text-[#9CA3B7] truncate">
+              <div className={`text-[10px] truncate ${
+                isLight ? 'text-slate-500' : 'text-[#9CA3B7]'
+              }`}>
                 {album.artist} • {album.releaseYear}
               </div>
             </div>

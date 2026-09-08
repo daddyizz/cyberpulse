@@ -312,7 +312,7 @@ function spotifyApiMiddleware(): Plugin {
 }
 
 export default defineConfig(() => ({
-  plugins: [cyberPlayerReliabilityPatch(), react(), tailwindcss(), spotifyApiMiddleware()],
+  plugins: [react(), tailwindcss(), spotifyApiMiddleware()],
   envPrefix: ['VITE_'],
   resolve: {
     alias: {

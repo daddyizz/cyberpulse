@@ -55,26 +55,24 @@ html.cyber-theme-pure_light .cyber-global-ambient {
   display: none !important;
 }
 
-/* Overriding old dark/cyber backgrounds to pristine light */
+/* Overriding old dark/cyber backgrounds to pristine light cards */
 html.theme-pure_light [class*="bg-[#07090F]"],
 html.theme-pure_light [class*="bg-[#090D13]"],
-html.theme-pure_light [class*="bg-[#000000]"],
 html.theme-pure_light [class*="bg-[#05070B]"],
 html.cyber-theme-pure_light [class*="bg-[#07090F]"],
 html.cyber-theme-pure_light [class*="bg-[#090D13]"],
-html.cyber-theme-pure_light [class*="bg-[#000000]"],
 html.cyber-theme-pure_light [class*="bg-[#05070B]"] {
   background-color: #FFFFFF !important;
   background-image: none !important;
 }
 
-html.theme-pure_light [class*="bg-[#10131C]"],
+html.theme-pure_light [class*="bg-[#10131C]"]:not(button):not([class*="text-white"]),
 html.theme-pure_light [class*="bg-[#0C0C0C]"],
 html.theme-pure_light [class*="bg-[#0E131F]"],
 html.theme-pure_light [class*="bg-[#0A0D17]"],
 html.theme-pure_light [class*="bg-[#0D101C]"],
 html.theme-pure_light [class*="bg-[#101722]"],
-html.cyber-theme-pure_light [class*="bg-[#10131C]"],
+html.cyber-theme-pure_light [class*="bg-[#10131C]"]:not(button):not([class*="text-white"]),
 html.cyber-theme-pure_light [class*="bg-[#0C0C0C]"],
 html.cyber-theme-pure_light [class*="bg-[#0E131F]"],
 html.cyber-theme-pure_light [class*="bg-[#0A0D17]"],
@@ -91,14 +89,63 @@ html.cyber-theme-pure_light [class*="bg-[#171B28]"] {
   background-image: none !important;
 }
 
-/* Typography in Pure Light */
-html.theme-pure_light [class*="text-[#F7F8FC]"],
-html.theme-pure_light [class*="text-white"],
-html.cyber-theme-pure_light [class*="text-[#F7F8FC]"],
-html.cyber-theme-pure_light [class*="text-white"] {
+/* Neutralize neon gradients on cards to comfortable plain light cards in Pure Light */
+html.theme-pure_light [class*="bg-gradient-to-br"]:not(.sona-preserve-gradient),
+html.cyber-theme-pure_light [class*="bg-gradient-to-br"]:not(.sona-preserve-gradient) {
+  background-image: none !important;
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Ensure user avatar circle in Pure Light is always prominently visible */
+html.theme-pure_light .sona-avatar,
+html.cyber-theme-pure_light .sona-avatar {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #334155 !important;
+}
+html.theme-pure_light .sona-avatar-text,
+html.cyber-theme-pure_light .sona-avatar-text {
+  color: #FFFFFF !important;
+}
+
+/* Sona Mini Player Styling in Pure Light */
+html.theme-pure_light .sona-mini-player,
+html.cyber-theme-pure_light .sona-mini-player {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(226, 232, 240, 0.95) !important;
+  color: #0F172A !important;
+  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06) !important;
+}
+
+html.theme-pure_light .sona-mini-title,
+html.cyber-theme-pure_light .sona-mini-title {
   color: #0F172A !important;
 }
 
+html.theme-pure_light .sona-mini-artist,
+html.cyber-theme-pure_light .sona-mini-artist {
+  color: #64748B !important;
+}
+
+/* Base Headings and Text in Pure Light */
+html.theme-pure_light h1,
+html.theme-pure_light h2,
+html.theme-pure_light h3,
+html.theme-pure_light h4,
+html.theme-pure_light h5,
+html.theme-pure_light h6,
+html.cyber-theme-pure_light h1,
+html.cyber-theme-pure_light h2,
+html.cyber-theme-pure_light h3,
+html.cyber-theme-pure_light h4,
+html.cyber-theme-pure_light h5,
+html.cyber-theme-pure_light h6 {
+  color: #0F172A !important;
+}
+
+/* Subtitle and Muted Text in Pure Light */
 html.theme-pure_light [class*="text-[#9CA3B7]"],
 html.theme-pure_light [class*="text-[#61697C]"],
 html.cyber-theme-pure_light [class*="text-[#9CA3B7]"],
@@ -106,25 +153,71 @@ html.cyber-theme-pure_light [class*="text-[#61697C]"] {
   color: #64748B !important;
 }
 
-/* Neutralizing old neon colors in Pure Light */
-html.theme-pure_light [class*="text-[#00F5FF]"],
-html.theme-pure_light [class*="text-[#FF2ED1]"],
-html.theme-pure_light [class*="text-[#B8FF2C]"],
-html.cyber-theme-pure_light [class*="text-[#00F5FF]"],
-html.cyber-theme-pure_light [class*="text-[#FF2ED1]"],
-html.cyber-theme-pure_light [class*="text-[#B8FF2C]"] {
+/* Neutralizing old neon text accents to deep high-contrast navy in Pure Light */
+html.theme-pure_light [class*="text-[#00F5FF]"]:not([class*="bg-"]),
+html.theme-pure_light [class*="text-[#FF2ED1]"]:not([class*="bg-"]),
+html.theme-pure_light [class*="text-[#B8FF2C]"]:not([class*="bg-"]),
+html.cyber-theme-pure_light [class*="text-[#00F5FF]"]:not([class*="bg-"]),
+html.cyber-theme-pure_light [class*="text-[#FF2ED1]"]:not([class*="bg-"]),
+html.cyber-theme-pure_light [class*="text-[#B8FF2C]"]:not([class*="bg-"]) {
   color: #0F172A !important;
 }
 
-html.theme-pure_light [class*="bg-[#00F5FF]"],
-html.theme-pure_light [class*="bg-[#FF2ED1]"],
-html.theme-pure_light [class*="bg-[#B8FF2C]"],
-html.cyber-theme-pure_light [class*="bg-[#00F5FF]"],
-html.cyber-theme-pure_light [class*="bg-[#FF2ED1]"],
-html.cyber-theme-pure_light [class*="bg-[#B8FF2C]"] {
+/* CRITICAL FIX FOR PURE LIGHT:
+   Any button or pill with a dark background MUST have bright, crisp, auto-contrasting white text!
+   Never force text inside dark buttons/pills to dark navy. */
+html.theme-pure_light button[class*="bg-slate-900"],
+html.theme-pure_light button[class*="bg-black"],
+html.theme-pure_light button[class*="bg-[#0F172A]"],
+html.theme-pure_light button[class*="bg-[#00F5FF]"],
+html.theme-pure_light button[class*="bg-[#FF2ED1]"],
+html.theme-pure_light button[class*="bg-[#B8FF2C]"],
+html.theme-pure_light .sona-btn-dark,
+html.theme-pure_light .sona-pill-active,
+html.cyber-theme-pure_light button[class*="bg-slate-900"],
+html.cyber-theme-pure_light button[class*="bg-black"],
+html.cyber-theme-pure_light button[class*="bg-[#0F172A]"],
+html.cyber-theme-pure_light button[class*="bg-[#00F5FF]"],
+html.cyber-theme-pure_light button[class*="bg-[#FF2ED1]"],
+html.cyber-theme-pure_light button[class*="bg-[#B8FF2C]"],
+html.cyber-theme-pure_light .sona-btn-dark,
+html.cyber-theme-pure_light .sona-pill-active {
   background-color: #0F172A !important;
   color: #FFFFFF !important;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15) !important;
+}
+
+/* All children/spans/icons inside dark buttons/pills in Pure Light */
+html.theme-pure_light button[class*="bg-slate-900"] *,
+html.theme-pure_light button[class*="bg-black"] *,
+html.theme-pure_light button[class*="bg-[#0F172A]"] *,
+html.theme-pure_light button[class*="bg-[#00F5FF]"] *,
+html.theme-pure_light button[class*="bg-[#FF2ED1]"] *,
+html.theme-pure_light button[class*="bg-[#B8FF2C]"] *,
+html.theme-pure_light .sona-btn-dark *,
+html.theme-pure_light .sona-pill-active *,
+html.cyber-theme-pure_light button[class*="bg-slate-900"] *,
+html.cyber-theme-pure_light button[class*="bg-black"] *,
+html.cyber-theme-pure_light button[class*="bg-[#0F172A]"] *,
+html.cyber-theme-pure_light button[class*="bg-[#00F5FF]"] *,
+html.cyber-theme-pure_light button[class*="bg-[#FF2ED1]"] *,
+html.cyber-theme-pure_light button[class*="bg-[#B8FF2C]"] *,
+html.cyber-theme-pure_light .sona-btn-dark *,
+html.cyber-theme-pure_light .sona-pill-active * {
+  color: #FFFFFF !important;
+  fill: currentColor !important;
+}
+
+/* Inactive pills and filter chips in Pure Light */
+html.theme-pure_light .sona-pill-inactive,
+html.cyber-theme-pure_light .sona-pill-inactive {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+  border-color: #E2E8F0 !important;
+}
+html.theme-pure_light .sona-pill-inactive *,
+html.cyber-theme-pure_light .sona-pill-inactive * {
+  color: #0F172A !important;
 }
 
 /* Borders in Pure Light */
@@ -140,15 +233,6 @@ html.cyber-theme-pure_light [class*="border-[#00F5FF]"],
 html.cyber-theme-pure_light [class*="border-[#FF2ED1]"],
 html.cyber-theme-pure_light [class*="border-[#B8FF2C]"] {
   border-color: #CBD5E1 !important;
-}
-
-html.theme-pure_light [class*="shadow-[#00F5FF]"],
-html.theme-pure_light [class*="shadow-[#FF2ED1]"],
-html.theme-pure_light [class*="shadow-[#B8FF2C]"],
-html.cyber-theme-pure_light [class*="shadow-[#00F5FF]"],
-html.cyber-theme-pure_light [class*="shadow-[#FF2ED1]"],
-html.cyber-theme-pure_light [class*="shadow-[#B8FF2C]"] {
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
 }
 
 /* Switch toggle styling */
@@ -171,10 +255,10 @@ html.theme-nike_run_club .sona-toggle-active .sona-toggle-thumb {
   background-color: #000000 !important;
 }
 
-html.theme-pure_light input,
+html.theme-pure_light input:not([type="checkbox"]):not([type="radio"]),
 html.theme-pure_light textarea,
 html.theme-pure_light select,
-html.cyber-theme-pure_light input,
+html.cyber-theme-pure_light input:not([type="checkbox"]):not([type="radio"]),
 html.cyber-theme-pure_light textarea,
 html.cyber-theme-pure_light select {
   background-color: #F8FAFC !important;
@@ -204,7 +288,7 @@ html.cyber-theme-pure_light ::-webkit-scrollbar-thumb:hover {
 }
 
 /* =========================================================
-   THEME 2: STEALTH ATHLETIC DARK (Deep Stealth with Dynamic Accent)
+   THEME 2: STEALTH ATHLETIC DARK (Untouched and Isolated)
    ========================================================= */
 html.theme-stealth_athletic,
 html.cyber-theme-stealth_athletic,
@@ -216,7 +300,7 @@ html.cyber-theme-nike_run_club {
   --sona-border: #242428;
   --sona-text: #FFFFFF;
   --sona-text-muted: #8E8E93;
-  --sona-accent: #CCFF00; /* default Volt */
+  --sona-accent: #CCFF00; /* Volt */
   --sona-accent-fg: #000000;
   --sona-accent-glow: rgba(204, 255, 0, 0.35);
 }
@@ -385,21 +469,6 @@ html.cyber-theme-nike_run_club [class*="border-[#B8FF2C]"] {
   border-color: var(--sona-accent) !important;
 }
 
-html.theme-stealth_athletic [class*="shadow-[#00F5FF]"],
-html.theme-stealth_athletic [class*="shadow-[#FF2ED1]"],
-html.theme-stealth_athletic [class*="shadow-[#B8FF2C]"],
-html.cyber-theme-stealth_athletic [class*="shadow-[#00F5FF]"],
-html.cyber-theme-stealth_athletic [class*="shadow-[#FF2ED1]"],
-html.cyber-theme-stealth_athletic [class*="shadow-[#B8FF2C]"],
-html.theme-nike_run_club [class*="shadow-[#00F5FF]"],
-html.theme-nike_run_club [class*="shadow-[#FF2ED1]"],
-html.theme-nike_run_club [class*="shadow-[#B8FF2C]"],
-html.cyber-theme-nike_run_club [class*="shadow-[#00F5FF]"],
-html.cyber-theme-nike_run_club [class*="shadow-[#FF2ED1]"],
-html.cyber-theme-nike_run_club [class*="shadow-[#B8FF2C]"] {
-  box-shadow: 0 4px 16px var(--sona-accent-glow) !important;
-}
-
 html.theme-stealth_athletic input[type="range"],
 html.cyber-theme-stealth_athletic input[type="range"],
 html.theme-nike_run_club input[type="range"],
@@ -427,4 +496,27 @@ html.cyber-theme-stealth_athletic ::-webkit-scrollbar-thumb:hover,
 html.theme-nike_run_club ::-webkit-scrollbar-thumb:hover,
 html.cyber-theme-nike_run_club ::-webkit-scrollbar-thumb:hover {
   background: var(--sona-accent);
+}
+
+/* =========================================================
+   SPECIAL ISOLATION: SUBSCRIPTION MODAL (Always Sleek Dark Athletic)
+   ========================================================= */
+.sona-subscription-container {
+  background-color: #0C0C0E !important;
+  color: #FFFFFF !important;
+  border-color: #26262B !important;
+}
+.sona-subscription-container h1,
+.sona-subscription-container h2,
+.sona-subscription-container h3,
+.sona-subscription-container h4 {
+  color: #FFFFFF !important;
+}
+.sona-subscription-container p {
+  color: #8E8E93 !important;
+}
+.sona-subscription-container input {
+  background-color: #141418 !important;
+  color: #FFFFFF !important;
+  border-color: #2E2E35 !important;
 }
