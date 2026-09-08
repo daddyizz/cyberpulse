@@ -3,57 +3,19 @@ import { DEMO_ARTISTS, GENRE_OPTIONS } from '../data/mockData';
 const normalize = (value?: string) => (value || '').trim().toLowerCase();
 const knownGenres = new Map(GENRE_OPTIONS.map((genre) => [normalize(genre), genre]));
 
-const readSavedGenres = (): string[] => {
-  for (const key of ['cyberpulse_preferences', 'sona_preferences']) {
-    try {
-      const raw = localStorage.getItem(key);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(parsed?.selectedGenres)) return parsed.selectedGenres.map(String);
-    } catch {}
-  }
-  return [];
-};
+// Onboarding is a fresh calibration session. Do not inherit old genre choices
+// just because preferences from a previous onboarding still exist.
+let selectedGenres = new Set<string>();
+let onboardingSessionStarted = false;
 
-let selectedGenres = new Set<string>(readSavedGenres());
-
-const isGenreButton = (button: HTMLButtonElement) => {
+const getGenre = (button: HTMLButtonElement) => {
   const label = button.textContent?.trim() || '';
   return knownGenres.get(normalize(label)) || null;
 };
 
-const captureVisibleGenreState = () => {
-  const heading = Array.from(document.querySelectorAll('h2')).find(
-    (el) => normalize(el.textContent) === 'what moves you?'
-  );
-  if (!heading) return false;
-
-  const root = heading.parentElement;
-  if (!root) return false;
-
-  const next = new Set<string>();
-  root.querySelectorAll<HTMLButtonElement>('button').forEach((button) => {
-    const genre = isGenreButton(button);
-    if (!genre) return;
-    const selected =
-      button.className.includes('border-[#00F5FF]') ||
-      button.getAttribute('aria-pressed') === 'true' ||
-      button.querySelector('svg') !== null;
-    if (selected) next.add(genre);
-  });
-
-  selectedGenres = next;
+const persistSessionGenres = () => {
   try {
-    sessionStorage.setItem('sona_onboarding_selected_genres', JSON.stringify(Array.from(next)));
-  } catch {}
-  return true;
-};
-
-const restoreCapturedGenres = () => {
-  if (selectedGenres.size) return;
-  try {
-    const raw = sessionStorage.getItem('sona_onboarding_selected_genres');
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(parsed)) selectedGenres = new Set(parsed.map(String));
+    sessionStorage.setItem('sona_onboarding_selected_genres', JSON.stringify(Array.from(selectedGenres)));
   } catch {}
 };
 
@@ -63,8 +25,6 @@ const applyArtistFilter = () => {
   );
   if (!heading) return;
 
-  restoreCapturedGenres();
-
   const root = heading.parentElement;
   const grid = root?.querySelector<HTMLElement>('div.grid.grid-cols-2');
   if (!grid) return;
@@ -72,23 +32,22 @@ const applyArtistFilter = () => {
   const chosen = new Set(Array.from(selectedGenres).map(normalize));
   const relevantNames = new Set(
     DEMO_ARTISTS
-      .filter((artist) =>
-        artist.genres?.some((genre) => chosen.has(normalize(genre)))
-      )
+      .filter((artist) => artist.genres?.some((genre) => chosen.has(normalize(genre))))
       .map((artist) => artist.name)
   );
 
   let visible = 0;
   Array.from(grid.children).forEach((child) => {
     if (!(child instanceof HTMLElement)) return;
+    if (child.dataset.sonaEmptyArtists === 'true') return;
     const text = child.textContent || '';
-    const matchedArtist = DEMO_ARTISTS.find((artist) => text.includes(artist.name));
-    const shouldShow = Boolean(matchedArtist && relevantNames.has(matchedArtist.name));
+    const artist = DEMO_ARTISTS.find((candidate) => text.includes(candidate.name));
+    const shouldShow = Boolean(artist && relevantNames.has(artist.name));
     child.style.display = shouldShow ? '' : 'none';
     if (shouldShow) visible += 1;
   });
 
-  let empty = root?.querySelector<HTMLElement>('[data-sona-empty-artists="true"]') || null;
+  let empty = grid.querySelector<HTMLElement>('[data-sona-empty-artists="true"]');
   if (visible === 0) {
     if (!empty) {
       empty = document.createElement('div');
@@ -105,39 +64,45 @@ const applyArtistFilter = () => {
   }
 };
 
-// Capture the genre click itself, before React unmounts Step 2.
+const resetSessionIfWelcome = () => {
+  const welcome = Array.from(document.querySelectorAll('h1')).some(
+    (el) => normalize(el.textContent) === 'your music. your universe.'
+  );
+  if (welcome && !onboardingSessionStarted) {
+    selectedGenres = new Set();
+    onboardingSessionStarted = true;
+    persistSessionGenres();
+  }
+};
+
 document.addEventListener(
   'click',
   (event) => {
+    resetSessionIfWelcome();
     const target = event.target as HTMLElement | null;
     const button = target?.closest<HTMLButtonElement>('button');
     if (button) {
-      const genre = isGenreButton(button);
+      const genre = getGenre(button);
       if (genre) {
+        // Capture only explicit choices in this onboarding session.
         if (selectedGenres.has(genre)) selectedGenres.delete(genre);
         else selectedGenres.add(genre);
-        try {
-          sessionStorage.setItem('sona_onboarding_selected_genres', JSON.stringify(Array.from(selectedGenres)));
-        } catch {}
+        persistSessionGenres();
       }
     }
-
-    window.setTimeout(() => captureVisibleGenreState(), 0);
-    window.setTimeout(() => applyArtistFilter(), 40);
-    window.setTimeout(() => applyArtistFilter(), 180);
+    window.setTimeout(applyArtistFilter, 0);
+    window.setTimeout(applyArtistFilter, 120);
   },
   true
 );
 
 const observer = new MutationObserver(() => {
-  window.setTimeout(() => {
-    captureVisibleGenreState();
-    applyArtistFilter();
-  }, 0);
+  resetSessionIfWelcome();
+  window.setTimeout(applyArtistFilter, 0);
 });
 observer.observe(document.documentElement, { childList: true, subtree: true });
 
 window.setInterval(() => {
-  captureVisibleGenreState();
+  resetSessionIfWelcome();
   applyArtistFilter();
 }, 400);
