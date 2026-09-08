@@ -5,11 +5,7 @@ const FALLBACK_ID = '4NRXx6U8ABQ';
 const MARKER = '__sonaCanonicalPlayback';
 const YT_SELECTOR = 'iframe[src*="youtube.com/embed"],iframe[src*="youtube-nocookie.com/embed"]';
 
-type UiTrack = {
-  title: string;
-  artist: string;
-  duration?: number;
-};
+type UiTrack = { title: string; artist: string; duration?: number };
 
 let frame: HTMLIFrameElement | null = null;
 let activeKey = '';
@@ -18,8 +14,6 @@ let playing = false;
 let currentTime = 0;
 let duration = 0;
 let generation = 0;
-let lastTelemetryAt = 0;
-let lastTickAt = performance.now();
 let recentSeekUntil = 0;
 
 const normalize = (value?: string) =>
@@ -30,7 +24,6 @@ const normalize = (value?: string) =>
     .trim();
 
 const keyFor = (title: string, artist: string) => `${normalize(title)}::${normalize(artist)}`;
-
 const extractVideoId = (src?: string | null) => src?.match(/\/embed\/([^?&#/]+)/)?.[1] || '';
 
 const post = (target: HTMLIFrameElement | null, func: string, args: unknown[] = []) => {
@@ -122,14 +115,8 @@ const createPlayer = (videoId: string) => {
   next.allow = 'autoplay; encrypted-media; picture-in-picture';
   next.setAttribute('aria-hidden', 'true');
   Object.assign(next.style, {
-    position: 'fixed',
-    left: '-10000px',
-    top: '-10000px',
-    width: '2px',
-    height: '2px',
-    opacity: '0',
-    pointerEvents: 'none',
-    border: '0',
+    position: 'fixed', left: '-10000px', top: '-10000px', width: '2px', height: '2px',
+    opacity: '0', pointerEvents: 'none', border: '0',
   });
   next.src = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&controls=0&playsinline=1&autoplay=0&rel=0&origin=${encodeURIComponent(window.location.origin)}`;
   document.body.appendChild(next);
@@ -137,9 +124,7 @@ const createPlayer = (videoId: string) => {
 
   next.addEventListener('load', () => {
     const prepare = () => {
-      try {
-        next.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: PLAYER_ID }), '*');
-      } catch {}
+      try { next.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: PLAYER_ID }), '*'); } catch {}
       post(next, 'unMute');
       if (currentTime > 0) post(next, 'seekTo', [currentTime, true]);
       post(next, playing ? 'playVideo' : 'pauseVideo');
@@ -152,17 +137,39 @@ const createPlayer = (videoId: string) => {
   return next;
 };
 
+const safeVisibleSrc = (videoId: string) =>
+  `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&playsinline=1&autoplay=0&mute=1&origin=${encodeURIComponent(window.location.origin)}`;
+
+const syncVisibleRenderers = (forceSeek = false) => {
+  document.querySelectorAll<HTMLIFrameElement>(YT_SELECTOR).forEach((candidate) => {
+    if (candidate.id === PLAYER_ID) return;
+    const id = extractVideoId(candidate.src);
+
+    if (!activeVideoId) {
+      if (id === FALLBACK_ID && !/blinding lights/i.test(getUiTrack()?.title || '')) candidate.src = 'about:blank';
+      return;
+    }
+
+    if (id !== activeVideoId) {
+      candidate.src = safeVisibleSrc(activeVideoId);
+      return;
+    }
+
+    post(candidate, 'mute');
+    if (forceSeek) post(candidate, 'seekTo', [currentTime, true]);
+    post(candidate, playing ? 'playVideo' : 'pauseVideo');
+  });
+};
+
 const loadVideo = (videoId: string, autoplay: boolean) => {
   if (!videoId) return;
   pauseHtmlMedia();
   playing = autoplay;
-  lastTickAt = performance.now();
+  activeVideoId = videoId;
 
   if (!frame) {
-    activeVideoId = videoId;
     createPlayer(videoId);
-  } else if (videoId !== activeVideoId) {
-    activeVideoId = videoId;
+  } else if (extractVideoId(frame.src) !== videoId) {
     currentTime = 0;
     duration = 0;
     post(frame, 'loadVideoById', [videoId, 0]);
@@ -183,18 +190,19 @@ const loadVideo = (videoId: string, autoplay: boolean) => {
 const scoreCandidate = (ui: UiTrack, candidate: any) => {
   const title = normalize(ui.title);
   const artist = normalize(ui.artist.split(',')[0] || ui.artist);
-  const cTitle = normalize(candidate.title);
-  const cArtist = normalize(candidate.artist);
+  const cTitle = normalize(candidate?.title);
+  const cArtist = normalize(candidate?.artist);
   let score = 0;
-  if (cTitle.includes(title)) score += 8;
-  if (title.includes(cTitle)) score += 2;
-  if (cTitle.includes(artist) || cArtist.includes(artist)) score += 6;
+  if (cTitle === title) score += 12;
+  else if (cTitle.includes(title)) score += 8;
+  else if (title.includes(cTitle)) score += 2;
+  if (artist && (cTitle.includes(artist) || cArtist.includes(artist))) score += 6;
   if (/official|audio|topic|vevo/.test(`${cTitle} ${cArtist}`)) score += 2;
-  if (ui.duration && candidate.durationSeconds) {
+  if (ui.duration && candidate?.durationSeconds) {
     const diff = Math.abs(ui.duration - candidate.durationSeconds);
     if (diff <= 4) score += 5;
     else if (diff <= 10) score += 3;
-    else if (diff > 45) score -= 5;
+    else if (diff > 40) score -= 6;
   }
   return score;
 };
@@ -220,12 +228,9 @@ const resolveVideoId = async (ui: UiTrack) => {
   const stored = lookupStoredVideoId(ui);
   if (stored) return stored;
 
-  const visibleId = Array.from(document.querySelectorAll<HTMLIFrameElement>(YT_SELECTOR))
-    .filter((candidate) => candidate.id !== PLAYER_ID)
-    .map((candidate) => extractVideoId(candidate.src))
-    .find((id) => id && (id !== FALLBACK_ID || /blinding lights/i.test(ui.title)));
-  if (visibleId) return visibleId;
-
+  // Do NOT trust the currently visible iframe here. It may still contain the
+  // previous song or the historical hard-coded fallback. Resolve from the
+  // selected title + artist every time the selected track changes.
   const queries = [
     `${ui.title} ${ui.artist} official audio`,
     `${ui.title} ${ui.artist} official video`,
@@ -238,36 +243,10 @@ const resolveVideoId = async (ui: UiTrack) => {
       const ranked = [...result.tracks]
         .filter((track) => Boolean(track.youtubeVideoId))
         .sort((a, b) => scoreCandidate(ui, b) - scoreCandidate(ui, a));
-      if (ranked[0] && scoreCandidate(ui, ranked[0]) >= 6) return ranked[0].youtubeVideoId || '';
+      if (ranked[0] && scoreCandidate(ui, ranked[0]) >= 7) return ranked[0].youtubeVideoId || '';
     } catch {}
   }
   return '';
-};
-
-const safeVisibleSrc = (videoId: string) =>
-  `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&playsinline=1&autoplay=0&mute=1&origin=${encodeURIComponent(window.location.origin)}`;
-
-const syncVisibleRenderers = (forceSeek = false) => {
-  document.querySelectorAll<HTMLIFrameElement>(YT_SELECTOR).forEach((candidate) => {
-    if (candidate.id === PLAYER_ID) return;
-    const id = extractVideoId(candidate.src);
-
-    // Never allow the historical hard-coded fallback to display for another song.
-    if (id === FALLBACK_ID && activeVideoId !== FALLBACK_ID) {
-      if (activeVideoId) candidate.src = safeVisibleSrc(activeVideoId);
-      else candidate.src = 'about:blank';
-      return;
-    }
-
-    if (activeVideoId && id !== activeVideoId) {
-      candidate.src = safeVisibleSrc(activeVideoId);
-      return;
-    }
-
-    post(candidate, 'mute');
-    if (forceSeek) post(candidate, 'seekTo', [currentTime, true]);
-    post(candidate, playing ? 'playVideo' : 'pauseVideo');
-  });
 };
 
 const reconcileTrack = async () => {
@@ -288,6 +267,9 @@ const reconcileTrack = async () => {
 
     if (frame) post(frame, 'pauseVideo');
     activeVideoId = '';
+    document.querySelectorAll<HTMLIFrameElement>(YT_SELECTOR).forEach((candidate) => {
+      if (candidate.id !== PLAYER_ID) post(candidate, 'pauseVideo');
+    });
     emitState(playing ? 1 : 2);
     emitTime();
     syncVisibleRenderers(true);
@@ -305,7 +287,6 @@ const reconcileTrack = async () => {
 
   if (intent !== playing) {
     playing = intent;
-    lastTickAt = performance.now();
     if (frame) post(frame, playing ? 'playVideo' : 'pauseVideo');
     emitState(playing ? 1 : 2);
   }
@@ -324,12 +305,10 @@ window.addEventListener('message', (event) => {
       const incoming = Number(data.info.currentTime);
       if (Number.isFinite(incoming)) {
         const allowBackward = Date.now() < recentSeekUntil;
-        if (allowBackward || incoming >= currentTime - 0.75) currentTime = Math.max(0, incoming);
+        if (allowBackward || incoming >= currentTime - 0.8) currentTime = Math.max(0, incoming);
       }
       const incomingDuration = Number(data.info.duration);
       if (Number.isFinite(incomingDuration) && incomingDuration > 0) duration = incomingDuration;
-      lastTelemetryAt = performance.now();
-      lastTickAt = performance.now();
       emitTime();
     }
     if (data?.event === 'onStateChange') {
@@ -340,6 +319,8 @@ window.addEventListener('message', (event) => {
     return;
   }
 
+  // Visible video renderer is presentation-only. Suppress its telemetry so it
+  // cannot fight the canonical player clock or create seekbar bounce.
   const isVisible = Array.from(document.querySelectorAll<HTMLIFrameElement>(YT_SELECTOR)).some(
     (candidate) => candidate.id !== PLAYER_ID && candidate.contentWindow === event.source
   );
@@ -355,7 +336,6 @@ document.addEventListener('input', (event) => {
   currentTime = Math.max(0, value);
   duration = Math.max(duration, max);
   recentSeekUntil = Date.now() + 1200;
-  lastTickAt = performance.now();
   if (frame) post(frame, 'seekTo', [currentTime, true]);
   emitTime();
   syncVisibleRenderers(true);
@@ -382,7 +362,7 @@ document.addEventListener('click', (event) => {
   }
 
   if (label === 'Audio Only' || label === 'Music Video') {
-    // Presentation switch only. Audio transport and clock never change here.
+    // Mode switch changes presentation only; canonical source/time stays put.
     setTimeout(() => syncVisibleRenderers(true), 40);
     setTimeout(() => syncVisibleRenderers(true), 180);
   }
@@ -398,21 +378,13 @@ const observer = new MutationObserver(() => {
 });
 observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
 
+// Keep the hidden player subscribed to real telemetry. Do not synthesize a
+// second clock here; React already has its own UI timer and fake clock events
+// were the source of forward/backward seekbar movement.
 setInterval(() => {
-  const now = performance.now();
-  if (playing && now - lastTelemetryAt > 700) {
-    const delta = Math.max(0, Math.min(0.35, (now - lastTickAt) / 1000));
-    currentTime += delta;
-    if (duration > 0) currentTime = Math.min(currentTime, duration);
-    emitTime();
-  }
-  lastTickAt = now;
   if (frame) {
     try { frame.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: PLAYER_ID }), '*'); } catch {}
   }
-}, 250);
-
-setInterval(() => {
   void reconcileTrack();
   syncVisibleRenderers(false);
 }, 500);
