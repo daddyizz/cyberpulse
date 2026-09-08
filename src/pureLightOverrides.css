@@ -1,0 +1,196 @@
+/* Final Pure Light contrast/layout overrides based on AI Studio mobile screenshots. */
+html.theme-pure_light,
+html.cyber-theme-pure_light {
+  --sona-light-bg: #f8fafc;
+  --sona-light-surface: #f1f5f9;
+  --sona-light-card: #ffffff;
+  --sona-light-border: #cbd5e1;
+  --sona-light-text: #0f172a;
+  --sona-light-muted: #475569;
+}
+
+/* 1) Pure Light must never leave white/light text stranded on light surfaces. */
+html.theme-pure_light [class*="text-[#F7F8FC]"],
+html.theme-pure_light [class*="text-[#F1F5F9]"],
+html.theme-pure_light [class*="text-white"],
+html.theme-pure_light [class*="text-slate-50"],
+html.theme-pure_light [class*="text-gray-100"],
+html.cyber-theme-pure_light [class*="text-[#F7F8FC]"],
+html.cyber-theme-pure_light [class*="text-[#F1F5F9]"],
+html.cyber-theme-pure_light [class*="text-white"],
+html.cyber-theme-pure_light [class*="text-slate-50"],
+html.cyber-theme-pure_light [class*="text-gray-100"] {
+  color: var(--sona-light-text) !important;
+}
+
+html.theme-pure_light [class*="text-[#9CA3B7]"],
+html.theme-pure_light [class*="text-[#8E8E93]"],
+html.theme-pure_light [class*="text-[#61697C]"],
+html.cyber-theme-pure_light [class*="text-[#9CA3B7]"],
+html.cyber-theme-pure_light [class*="text-[#8E8E93]"],
+html.cyber-theme-pure_light [class*="text-[#61697C]"] {
+  color: var(--sona-light-muted) !important;
+}
+
+/* 2-4) Dark pills/cards in Pure Light become light grey with black/dark labels. */
+html.theme-pure_light [class*="bg-[#10131C]"],
+html.theme-pure_light [class*="bg-[#171B28]"],
+html.theme-pure_light [class*="bg-[#141418]"],
+html.theme-pure_light [class*="bg-[#141416]"],
+html.theme-pure_light [class*="bg-[#1C1C20]"],
+html.theme-pure_light [class*="bg-[#1C1C22]"],
+html.theme-pure_light [class*="bg-[#242428]"],
+html.theme-pure_light [class*="bg-[#0C0C0E]"],
+html.theme-pure_light [class*="bg-[#0C0C0D]"],
+html.theme-pure_light [class*="bg-slate-900"],
+html.theme-pure_light [class*="bg-black"],
+html.cyber-theme-pure_light [class*="bg-[#10131C]"],
+html.cyber-theme-pure_light [class*="bg-[#171B28]"],
+html.cyber-theme-pure_light [class*="bg-[#141418]"],
+html.cyber-theme-pure_light [class*="bg-[#141416]"],
+html.cyber-theme-pure_light [class*="bg-[#1C1C20]"],
+html.cyber-theme-pure_light [class*="bg-[#1C1C22]"],
+html.cyber-theme-pure_light [class*="bg-[#242428]"],
+html.cyber-theme-pure_light [class*="bg-[#0C0C0E]"],
+html.cyber-theme-pure_light [class*="bg-[#0C0C0D]"],
+html.cyber-theme-pure_light [class*="bg-slate-900"],
+html.cyber-theme-pure_light [class*="bg-black"] {
+  background-color: var(--sona-light-surface) !important;
+  background-image: none !important;
+  border-color: var(--sona-light-border) !important;
+  color: var(--sona-light-text) !important;
+  box-shadow: none !important;
+}
+
+html.theme-pure_light [class*="bg-[#10131C]"] *,
+html.theme-pure_light [class*="bg-[#171B28]"] *,
+html.theme-pure_light [class*="bg-[#141418]"] *,
+html.theme-pure_light [class*="bg-[#141416]"] *,
+html.theme-pure_light [class*="bg-[#1C1C20]"] *,
+html.theme-pure_light [class*="bg-[#1C1C22]"] *,
+html.theme-pure_light [class*="bg-[#242428]"] *,
+html.theme-pure_light [class*="bg-[#0C0C0E]"] *,
+html.theme-pure_light [class*="bg-[#0C0C0D]"] *,
+html.theme-pure_light [class*="bg-slate-900"] *,
+html.theme-pure_light [class*="bg-black"] *,
+html.cyber-theme-pure_light [class*="bg-[#10131C]"] *,
+html.cyber-theme-pure_light [class*="bg-[#171B28]"] *,
+html.cyber-theme-pure_light [class*="bg-[#141418]"] *,
+html.cyber-theme-pure_light [class*="bg-[#141416]"] *,
+html.cyber-theme-pure_light [class*="bg-[#1C1C20]"] *,
+html.cyber-theme-pure_light [class*="bg-[#1C1C22]"] *,
+html.cyber-theme-pure_light [class*="bg-[#242428]"] *,
+html.cyber-theme-pure_light [class*="bg-[#0C0C0E]"] *,
+html.cyber-theme-pure_light [class*="bg-[#0C0C0D]"] *,
+html.cyber-theme-pure_light [class*="bg-slate-900"] *,
+html.cyber-theme-pure_light [class*="bg-black"] * {
+  color: var(--sona-light-text) !important;
+}
+
+/* Keep branded Spotify / YouTube pills intentionally colored. */
+html.theme-pure_light [class*="bg-[#1DB954]"],
+html.cyber-theme-pure_light [class*="bg-[#1DB954]"] {
+  background-color: #ecfdf3 !important;
+  border-color: #86efac !important;
+}
+html.theme-pure_light [class*="bg-red-"],
+html.cyber-theme-pure_light [class*="bg-red-"] {
+  background-image: none;
+}
+
+/* Restore the Liked Songs heart badge gradient; the generic light-theme gradient reset must not erase it. */
+html.theme-pure_light div.w-12.h-12[class*="from-[#FF2ED1]"][class*="to-[#8B5CFF]"],
+html.cyber-theme-pure_light div.w-12.h-12[class*="from-[#FF2ED1]"][class*="to-[#8B5CFF]"] {
+  background-image: linear-gradient(135deg, #ff2ed1 0%, #8b5cff 100%) !important;
+  background-color: #8b5cff !important;
+}
+html.theme-pure_light div.w-12.h-12[class*="from-[#FF2ED1]"][class*="to-[#8B5CFF]"] svg,
+html.cyber-theme-pure_light div.w-12.h-12[class*="from-[#FF2ED1]"][class*="to-[#8B5CFF]"] svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* 5) Global Settings account row: keep Save fully inside the card at every phone width. */
+#settings-account {
+  overflow: hidden;
+}
+#settings-account form,
+#settings-account form > div.flex.items-center.gap-2 {
+  width: 100%;
+  max-width: 100%;
+}
+#settings-account form > div.flex.items-center.gap-2 {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+#settings-account form input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+#settings-account form button[type="submit"] {
+  position: static !important;
+  transform: none !important;
+  max-width: 7rem !important;
+  white-space: nowrap !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+/* 6) Sona Pro modal: light surface, readable dark typography and safe top spacing. */
+html.theme-pure_light .sona-subscription-container,
+html.cyber-theme-pure_light .sona-subscription-container {
+  background: #ffffff !important;
+  color: var(--sona-light-text) !important;
+  border-color: var(--sona-light-border) !important;
+  max-height: calc(100dvh - 7.5rem) !important;
+  margin-top: max(2.25rem, env(safe-area-inset-top)) !important;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.16) !important;
+}
+html.theme-pure_light .sona-subscription-container h1,
+html.theme-pure_light .sona-subscription-container h2,
+html.theme-pure_light .sona-subscription-container h3,
+html.theme-pure_light .sona-subscription-container h4,
+html.theme-pure_light .sona-subscription-container p,
+html.theme-pure_light .sona-subscription-container label,
+html.theme-pure_light .sona-subscription-container span,
+html.theme-pure_light .sona-subscription-container div,
+html.cyber-theme-pure_light .sona-subscription-container h1,
+html.cyber-theme-pure_light .sona-subscription-container h2,
+html.cyber-theme-pure_light .sona-subscription-container h3,
+html.cyber-theme-pure_light .sona-subscription-container h4,
+html.cyber-theme-pure_light .sona-subscription-container p,
+html.cyber-theme-pure_light .sona-subscription-container label,
+html.cyber-theme-pure_light .sona-subscription-container span,
+html.cyber-theme-pure_light .sona-subscription-container div {
+  color: inherit;
+}
+html.theme-pure_light .sona-subscription-container [class*="bg-[#141418]"],
+html.theme-pure_light .sona-subscription-container [class*="bg-[#242428]"],
+html.theme-pure_light .sona-subscription-container [class*="bg-[#0C0C0E]"],
+html.cyber-theme-pure_light .sona-subscription-container [class*="bg-[#141418]"],
+html.cyber-theme-pure_light .sona-subscription-container [class*="bg-[#242428]"],
+html.cyber-theme-pure_light .sona-subscription-container [class*="bg-[#0C0C0E]"] {
+  background: var(--sona-light-surface) !important;
+  border-color: var(--sona-light-border) !important;
+}
+html.theme-pure_light .sona-subscription-container input,
+html.cyber-theme-pure_light .sona-subscription-container input {
+  background: #ffffff !important;
+  color: var(--sona-light-text) !important;
+  border-color: var(--sona-light-border) !important;
+}
+
+/* Compact phone safety. */
+@media (max-width: 390px) {
+  #settings-account form button[type="submit"] {
+    max-width: 5.75rem !important;
+    font-size: 0.68rem !important;
+  }
+  html.theme-pure_light .sona-subscription-container,
+  html.cyber-theme-pure_light .sona-subscription-container {
+    max-height: calc(100dvh - 6.5rem) !important;
+    margin-top: max(1.5rem, env(safe-area-inset-top)) !important;
+  }
+}
