@@ -1,31 +1,49 @@
-import { DEMO_ALBUMS, DEMO_ARTISTS, DEMO_TRACKS } from '../data/mockData';
+import { DEMO_ALBUMS, DEMO_ARTISTS, DEMO_PLAYLISTS, DEMO_TRACKS } from '../data/mockData';
 import { searchSpotifyTracks } from './spotifyService';
 import { searchYouTubeVideos } from './youtubeService';
-import type { Album, Artist, Track } from '../types';
+import type { Album, Artist, Playlist, Track } from '../types';
 
-const CACHE_KEY = 'cyberpulse_live_catalog_v1';
-const CACHE_TTL_MS = 45 * 60 * 1000;
-const MAX_LIVE_TRACKS = 24;
+const CACHE_KEY = 'cyberpulse_live_catalog_v3';
+const CACHE_TTL_MS = 20 * 60 * 1000;
+const MAX_TRACKS = 60;
+
+const GENRE_QUERIES = [
+  'synthwave',
+  'electronic',
+  'pop',
+  'hip hop',
+  'rock',
+  'r&b',
+  'edm',
+  'k-pop',
+  'malay',
+  'indonesian',
+  'metal',
+  'alternative',
+] as const;
 
 type LiveCatalogCache = {
   updatedAt: number;
   tracks: Track[];
   artists: Artist[];
   albums: Album[];
+  playlists: Playlist[];
 };
 
+type TaggedTrack = Track & { __liveGenre?: string };
+
+const normalize = (value?: string) => (value || '').trim().toLowerCase();
+const keyForTrack = (track: Track) => `${normalize(track.title)}::${normalize(track.artist)}`;
 const slug = (value: string) =>
   value
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
+    .slice(0, 64);
 
-const trackKey = (track: Track) => `${track.title.trim().toLowerCase()}::${track.artist.trim().toLowerCase()}`;
-
-const sanitizeLiveTrack = (track: Track): Track => {
-  const audio = (track.audioUrl || '').toLowerCase();
+const stripPreviewAudio = (track: TaggedTrack): TaggedTrack => {
+  const audio = normalize(track.audioUrl);
   const previewOnly =
     track.source === 'SPOTIFY' ||
     audio.includes('/audiopreview') ||
@@ -34,43 +52,63 @@ const sanitizeLiveTrack = (track: Track): Track => {
   return previewOnly ? { ...track, audioUrl: undefined } : { ...track };
 };
 
-const mergeUniqueTracks = (liveTracks: Track[], seedTracks: Track[]): Track[] => {
+const uniqueTracks = (input: TaggedTrack[]): TaggedTrack[] => {
   const seen = new Set<string>();
-  const merged: Track[] = [];
-  for (const rawTrack of [...liveTracks, ...seedTracks]) {
-    const track = sanitizeLiveTrack(rawTrack);
-    const key = trackKey(track);
-    if (!track.title || !track.artist || seen.has(key)) continue;
+  const result: TaggedTrack[] = [];
+  for (const raw of input) {
+    if (!raw?.title || !raw?.artist) continue;
+    const track = stripPreviewAudio(raw);
+    const key = keyForTrack(track);
+    if (seen.has(key)) continue;
     seen.add(key);
-    merged.push(track);
+    result.push(track);
   }
-  return merged;
+  return result;
 };
 
-const deriveArtistsAndAlbums = (tracks: Track[]) => {
-  const artistMap = new Map<string, Artist>();
-  const albumMap = new Map<string, Album>();
+const deriveArtists = (tracks: TaggedTrack[]): Artist[] => {
+  const artists = new Map<string, Artist>();
 
   for (const track of tracks) {
     const primaryArtist = track.artist.split(',')[0]?.trim() || track.artist;
-    const artistId = `live_artist_${slug(primaryArtist) || 'artist'}`;
-    if (!artistMap.has(artistId)) {
-      artistMap.set(artistId, {
-        id: artistId,
+    const id = `live_artist_${slug(primaryArtist) || 'artist'}`;
+    const genre = track.__liveGenre || (track.source === 'YOUTUBE' ? 'Trending' : 'Live');
+    const existing = artists.get(id);
+
+    if (!existing) {
+      artists.set(id, {
+        id,
         name: primaryArtist,
         followersCount: Math.max(0, track.playsCount || 0),
         source: track.source,
         artworkKey: track.placeholderArtworkKey || 'live-artist',
         artworkUrl: track.artworkUrl,
-        genres: ['Live Discovery'],
+        genres: [genre],
       });
+    } else {
+      const genres = new Set([...(existing.genres || []), genre]);
+      existing.genres = Array.from(genres);
+      if (!existing.artworkUrl && track.artworkUrl) existing.artworkUrl = track.artworkUrl;
+      existing.followersCount = Math.max(existing.followersCount || 0, track.playsCount || 0);
     }
+  }
 
+  return Array.from(artists.values()).slice(0, 36);
+};
+
+const deriveAlbums = (tracks: TaggedTrack[]): Album[] => {
+  const albums = new Map<string, Album>();
+
+  for (const track of tracks) {
     const albumName = track.album || `${track.title} — Single`;
-    const albumId = `live_album_${slug(`${primaryArtist}-${albumName}`) || track.id}`;
-    if (!albumMap.has(albumId)) {
-      albumMap.set(albumId, {
-        id: albumId,
+    const primaryArtist = track.artist.split(',')[0]?.trim() || track.artist;
+    const id = `live_album_${slug(`${primaryArtist}-${albumName}`) || track.id}`;
+    const artistId = `live_artist_${slug(primaryArtist) || 'artist'}`;
+    const existing = albums.get(id);
+
+    if (!existing) {
+      albums.set(id, {
+        id,
         title: albumName,
         artist: primaryArtist,
         artistId,
@@ -82,47 +120,51 @@ const deriveArtistsAndAlbums = (tracks: Track[]) => {
         tracks: [track],
       });
     } else {
-      const album = albumMap.get(albumId)!;
-      album.tracks = [...(album.tracks || []), track];
-      album.tracksCount = album.tracks.length;
+      existing.tracks = [...(existing.tracks || []), track];
+      existing.tracksCount = existing.tracks.length;
+      if (!existing.artworkUrl && track.artworkUrl) existing.artworkUrl = track.artworkUrl;
     }
   }
 
+  return Array.from(albums.values()).slice(0, 30);
+};
+
+const makePlaylist = (id: string, title: string, description: string, tracks: Track[]): Playlist | null => {
+  if (!tracks.length) return null;
   return {
-    artists: Array.from(artistMap.values()).slice(0, 16),
-    albums: Array.from(albumMap.values()).slice(0, 16),
+    id,
+    title,
+    description,
+    artworkKey: tracks[0].placeholderArtworkKey || 'live-playlist',
+    artworkUrl: tracks[0].artworkUrl,
+    trackCount: tracks.length,
+    createdBy: 'Sona Live Catalog',
+    source: tracks.some((track) => track.source === 'SPOTIFY') ? 'SPOTIFY' : 'YOUTUBE',
+    tracks,
   };
 };
 
+const derivePlaylists = (tracks: TaggedTrack[]): Playlist[] => {
+  const spotify = tracks.filter((track) => track.source === 'SPOTIFY');
+  const youtube = tracks.filter((track) => track.source === 'YOUTUBE');
+  const malaysia = tracks.filter((track) => ['malay', 'indonesian'].includes(normalize(track.__liveGenre)));
+  const energetic = tracks.filter((track) => ['edm', 'electronic', 'rock', 'metal', 'alternative'].includes(normalize(track.__liveGenre)));
+
+  return [
+    makePlaylist('live_spotify_fresh', 'Spotify Fresh', 'Live Spotify discoveries refreshed automatically.', spotify.slice(0, 14)),
+    makePlaylist('live_youtube_now', 'YouTube Now', 'Current YouTube music discoveries available for full playback.', youtube.slice(0, 14)),
+    makePlaylist('live_malaysia_now', 'Malaysia & Nusantara', 'Live Malay and Indonesian discoveries.', malaysia.slice(0, 14)),
+    makePlaylist('live_energy_mix', 'Live Energy Mix', 'Fresh electronic, rock and high-energy discoveries.', energetic.slice(0, 14)),
+  ].filter((playlist): playlist is Playlist => Boolean(playlist));
+};
+
 const applyCatalog = (catalog: LiveCatalogCache) => {
-  const currentFirst = DEMO_TRACKS[0];
-  const mergedTracks = mergeUniqueTracks(catalog.tracks, DEMO_TRACKS).slice(0, 64);
-
-  if (currentFirst) {
-    const firstKey = trackKey(currentFirst);
-    const withoutFirst = mergedTracks.filter((track) => trackKey(track) !== firstKey);
-    DEMO_TRACKS.splice(0, DEMO_TRACKS.length, sanitizeLiveTrack(currentFirst), ...withoutFirst);
-  } else {
-    DEMO_TRACKS.splice(0, DEMO_TRACKS.length, ...mergedTracks);
-  }
-
-  // Keep the curated genre-tagged artist seeds first. Onboarding relies on
-  // those genre tags; generic "Live Discovery" artists must not take over the
-  // Favorite Artists step. Live artists remain available after the seed set.
-  const seedArtists = DEMO_ARTISTS.filter((artist) => !artist.id.startsWith('live_artist_'));
-  const seedNames = new Set(seedArtists.map((artist) => artist.name.trim().toLowerCase()));
-  const liveArtists = catalog.artists.filter(
-    (artist) => !seedNames.has(artist.name.trim().toLowerCase())
-  );
-  DEMO_ARTISTS.splice(0, DEMO_ARTISTS.length, ...seedArtists, ...liveArtists);
-
-  const existingAlbumIds = new Set(catalog.albums.map((album) => album.id));
-  DEMO_ALBUMS.splice(
-    0,
-    DEMO_ALBUMS.length,
-    ...catalog.albums,
-    ...DEMO_ALBUMS.filter((album) => !existingAlbumIds.has(album.id))
-  );
+  // Legacy UI imports these arrays from mockData. Treat them only as mutable
+  // containers and replace their contents completely with live data.
+  DEMO_TRACKS.splice(0, DEMO_TRACKS.length, ...catalog.tracks);
+  DEMO_ARTISTS.splice(0, DEMO_ARTISTS.length, ...catalog.artists);
+  DEMO_ALBUMS.splice(0, DEMO_ALBUMS.length, ...catalog.albums);
+  DEMO_PLAYLISTS.splice(0, DEMO_PLAYLISTS.length, ...catalog.playlists);
 };
 
 const readCache = (): LiveCatalogCache | null => {
@@ -132,7 +174,6 @@ const readCache = (): LiveCatalogCache | null => {
     const parsed = JSON.parse(raw) as LiveCatalogCache;
     if (!parsed?.updatedAt || !Array.isArray(parsed.tracks)) return null;
     if (Date.now() - parsed.updatedAt > CACHE_TTL_MS) return null;
-    parsed.tracks = parsed.tracks.map(sanitizeLiveTrack);
     return parsed;
   } catch {
     return null;
@@ -143,48 +184,88 @@ const writeCache = (catalog: LiveCatalogCache) => {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(catalog));
   } catch {
-    // Cache is optional; live discovery still works without localStorage.
+    // Live data still works without cache.
   }
 };
 
+const unavailableTrack = (): Track => ({
+  id: 'live_catalog_unavailable',
+  title: 'Live catalog unavailable',
+  artist: 'Check Spotify / YouTube connection',
+  album: 'Online Catalog',
+  durationSeconds: 0,
+  placeholderArtworkKey: 'live-unavailable',
+  source: 'YOUTUBE',
+  playbackCapability: {
+    mode: 'EXTERNAL_PLAYER',
+    supportsOffline: false,
+    supportsLyrics: false,
+    streamBitrateKbps: 0,
+    notice: 'No live catalog data is currently available.',
+  },
+});
+
 /**
- * Refresh the app's discovery seed from live Spotify + YouTube data.
- * mockData remains the offline fallback, while exported arrays are hydrated
- * before React mounts so songs, artists and albums rotate automatically.
+ * Hydrate every browse surface from Spotify + YouTube before React mounts.
+ * Bundled demo rows are never rendered after this bootstrap runs.
  */
 export async function hydrateLiveCatalog(): Promise<void> {
   const cached = readCache();
-  if (cached) {
+  if (cached?.tracks?.length) {
     applyCatalog(cached);
     return;
   }
 
+  // Clear bundled demo content immediately, including playlists.
+  DEMO_TRACKS.splice(0, DEMO_TRACKS.length);
+  DEMO_ARTISTS.splice(0, DEMO_ARTISTS.length);
+  DEMO_ALBUMS.splice(0, DEMO_ALBUMS.length);
+  DEMO_PLAYLISTS.splice(0, DEMO_PLAYLISTS.length);
+
+  const spotifyRequests = GENRE_QUERIES.map(async (genre) => {
+    const result = await searchSpotifyTracks(`${genre} new music`, 4);
+    return result.tracks.map((track) => ({ ...track, __liveGenre: genre } as TaggedTrack));
+  });
+
   const year = new Date().getFullYear();
-  const spotifyQueries = [`year:${year}`, `pop ${year}`, `Malaysia ${year}`];
-  const youtubeQueries = [`official music video ${year}`, `new music ${year}`];
+  const youtubeRequests = [
+    `new music ${year} official audio`,
+    `trending music ${year} official video`,
+    `Malaysia new music ${year}`,
+  ].map(async (query) => {
+    const result = await searchYouTubeVideos(query, 8);
+    return result.tracks.map((track) => ({
+      ...track,
+      __liveGenre: query.includes('Malaysia') ? 'malay' : 'Trending',
+    } as TaggedTrack));
+  });
 
-  const settled = await Promise.allSettled([
-    ...spotifyQueries.map((query) => searchSpotifyTracks(query, 8)),
-    ...youtubeQueries.map((query) => searchYouTubeVideos(query, 8)),
-  ]);
-
-  const liveTracks: Track[] = [];
+  const settled = await Promise.allSettled([...spotifyRequests, ...youtubeRequests]);
+  const collected: TaggedTrack[] = [];
   for (const result of settled) {
-    if (result.status !== 'fulfilled') continue;
-    const value = result.value as { tracks?: Track[] };
-    if (Array.isArray(value.tracks)) liveTracks.push(...value.tracks.map(sanitizeLiveTrack));
+    if (result.status === 'fulfilled') collected.push(...result.value);
   }
 
-  const uniqueLive = mergeUniqueTracks(liveTracks, []).slice(0, MAX_LIVE_TRACKS);
-  if (!uniqueLive.length) return;
+  const tracks = uniqueTracks(collected).slice(0, MAX_TRACKS);
+  if (!tracks.length) {
+    applyCatalog({
+      updatedAt: Date.now(),
+      tracks: [unavailableTrack()],
+      artists: [],
+      albums: [],
+      playlists: [],
+    });
+    return;
+  }
 
-  const { artists, albums } = deriveArtistsAndAlbums(uniqueLive);
   const catalog: LiveCatalogCache = {
     updatedAt: Date.now(),
-    tracks: uniqueLive,
-    artists,
-    albums,
+    tracks,
+    artists: deriveArtists(tracks),
+    albums: deriveAlbums(tracks),
+    playlists: derivePlaylists(tracks),
   };
+
   writeCache(catalog);
   applyCatalog(catalog);
 }
