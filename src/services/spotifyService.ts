@@ -57,8 +57,7 @@ function mapSpotifyItemToTrack(item: any): Track {
     artworkUrl,
     placeholderArtworkKey: 'neon_grid',
     durationSeconds,
-    // Spotify Web API preview_url is intentionally NOT used as a full-song source.
-    // Playback is resolved to YouTube when the app cannot access a full Spotify stream.
+    // Spotify preview_url is never a full-song source in Sona.
     audioUrl: undefined,
     spotifyTrackId: spotifyId,
     spotifyUri,
@@ -71,7 +70,7 @@ function mapSpotifyItemToTrack(item: any): Track {
       supportsOffline: false,
       supportsLyrics: true,
       streamBitrateKbps: 320,
-      notice: 'Spotify supplies catalog metadata and artwork. Full playback falls back to a verified YouTube source when required.'
+      notice: 'Spotify supplies official metadata/artwork; full playback is verified against YouTube.'
     }
   };
 }
@@ -199,43 +198,77 @@ function scoreYouTubeMatch(source: Track, candidate: Track): number {
   const candidateTitle = normalize(candidate.title);
   const candidateArtist = normalize(candidate.artist);
   let score = 0;
-  if (candidateTitle.includes(srcTitle)) score += 6;
+
+  if (candidateTitle.includes(srcTitle)) score += 8;
   if (srcTitle.includes(candidateTitle)) score += 2;
-  if (candidateTitle.includes(srcArtist) || candidateArtist.includes(srcArtist)) score += 4;
-  if (/official|audio|topic|vevo/.test(candidateTitle + ' ' + candidateArtist)) score += 2;
+  if (candidateTitle.includes(srcArtist) || candidateArtist.includes(srcArtist)) score += 5;
+  if (/official|audio|topic|vevo/.test(`${candidateTitle} ${candidateArtist}`)) score += 2;
+
+  const sourceDuration = source.durationSeconds || 0;
+  const candidateDuration = candidate.durationSeconds || 0;
+  if (sourceDuration > 0 && candidateDuration > 0) {
+    const diff = Math.abs(sourceDuration - candidateDuration);
+    if (diff <= 3) score += 5;
+    else if (diff <= 8) score += 3;
+    else if (diff <= 15) score += 1;
+    else if (diff > 45) score -= 5;
+  }
+
   return score;
 }
 
-async function resolveSpotifyTracksToYouTube(tracks: Track[]): Promise<Track[]> {
-  const MAX_EAGER_RESOLVE = 24;
-  const resolved = [...tracks];
+async function resolveOneSpotifyTrack(track: Track): Promise<Track | null> {
+  const queries = [
+    `${track.title} ${track.artist} official audio`,
+    `${track.title} ${track.artist}`,
+  ];
 
-  for (let start = 0; start < Math.min(tracks.length, MAX_EAGER_RESOLVE); start += 4) {
-    const batch = tracks.slice(start, Math.min(start + 4, MAX_EAGER_RESOLVE));
-    const results = await Promise.allSettled(
-      batch.map(async (track) => {
-        const query = `${track.title} ${track.artist} official audio`;
-        const yt = await searchYouTubeVideos(query, 3);
-        if (!yt.tracks.length) return track;
-        const best = [...yt.tracks].sort((a, b) => scoreYouTubeMatch(track, b) - scoreYouTubeMatch(track, a))[0];
-        if (!best?.youtubeVideoId) return track;
-        return {
-          ...track,
-          // Preserve Spotify artwork/metadata while attaching verified YouTube playback.
-          artworkUrl: track.artworkUrl,
-          youtubeVideoId: best.youtubeVideoId,
-          audioUrl: undefined,
-          source: 'SPOTIFY' as const,
-        };
-      })
-    );
+  for (const query of queries) {
+    const yt = await searchYouTubeVideos(query, 5);
+    if (!yt.tracks.length) continue;
 
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled') resolved[start + index] = result.value;
-    });
+    const ranked = [...yt.tracks].sort((a, b) => scoreYouTubeMatch(track, b) - scoreYouTubeMatch(track, a));
+    const best = ranked[0];
+    if (!best?.youtubeVideoId) continue;
+
+    const bestScore = scoreYouTubeMatch(track, best);
+    if (bestScore < 6) continue;
+
+    return {
+      ...track,
+      artworkUrl: track.artworkUrl,
+      youtubeVideoId: best.youtubeVideoId,
+      audioUrl: undefined,
+      source: 'SPOTIFY' as const,
+      playbackCapability: {
+        ...track.playbackCapability,
+        mode: 'EXTERNAL_PLAYER',
+        supportsOffline: false,
+        notice: 'Spotify metadata/artwork with verified full-length YouTube playback.',
+      },
+    };
   }
 
-  return resolved.map((track) => ({ ...track, audioUrl: undefined }));
+  return null;
+}
+
+async function resolveSpotifyTracksToYouTube(tracks: Track[]): Promise<Track[]> {
+  const playable: Track[] = [];
+
+  // Resolve in small batches to avoid creating many simultaneous iframe/API requests.
+  for (let start = 0; start < tracks.length; start += 4) {
+    const batch = tracks.slice(start, start + 4);
+    const results = await Promise.allSettled(batch.map(resolveOneSpotifyTrack));
+
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value?.youtubeVideoId) {
+        playable.push(result.value);
+      }
+    }
+  }
+
+  // Never place an imported item in the app when no verified full playback source exists.
+  return playable;
 }
 
 export async function importSpotifyPlaylist(playlistUrlOrId: string): Promise<ImportPlaylistResult> {
@@ -268,9 +301,15 @@ export async function importSpotifyPlaylist(playlistUrlOrId: string): Promise<Im
       if (searchRes.tracks.length > 0) tracks = searchRes.tracks;
     }
 
-    // Spotify remains authoritative for cover art and catalog metadata.
-    // YouTube supplies the verified full-length playback ID when Spotify Web API cannot.
+    const sourceCount = tracks.length;
     tracks = await resolveSpotifyTracksToYouTube(tracks);
+
+    if (sourceCount > 0 && tracks.length === 0) {
+      return {
+        success: false,
+        error: 'Spotify playlist loaded, but no tracks had a verified full-length YouTube playback match. Nothing was imported.',
+      };
+    }
 
     const importedPlaylist: Playlist = {
       id: `sp_pl_${playlistId}_${Date.now()}`,
