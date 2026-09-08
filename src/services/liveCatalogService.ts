@@ -106,13 +106,15 @@ const applyCatalog = (catalog: LiveCatalogCache) => {
     DEMO_TRACKS.splice(0, DEMO_TRACKS.length, ...mergedTracks);
   }
 
-  const existingArtistIds = new Set(catalog.artists.map((artist) => artist.id));
-  DEMO_ARTISTS.splice(
-    0,
-    DEMO_ARTISTS.length,
-    ...catalog.artists,
-    ...DEMO_ARTISTS.filter((artist) => !existingArtistIds.has(artist.id))
+  // Keep the curated genre-tagged artist seeds first. Onboarding relies on
+  // those genre tags; generic "Live Discovery" artists must not take over the
+  // Favorite Artists step. Live artists remain available after the seed set.
+  const seedArtists = DEMO_ARTISTS.filter((artist) => !artist.id.startsWith('live_artist_'));
+  const seedNames = new Set(seedArtists.map((artist) => artist.name.trim().toLowerCase()));
+  const liveArtists = catalog.artists.filter(
+    (artist) => !seedNames.has(artist.name.trim().toLowerCase())
   );
+  DEMO_ARTISTS.splice(0, DEMO_ARTISTS.length, ...seedArtists, ...liveArtists);
 
   const existingAlbumIds = new Set(catalog.albums.map((album) => album.id));
   DEMO_ALBUMS.splice(
